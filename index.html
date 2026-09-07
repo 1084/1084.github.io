@@ -99,6 +99,7 @@
     nav.top .links { gap: 14px; }
   }
 </style>
+<script data-goatcounter="https://johnhubert.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -171,5 +172,16 @@
     <span><a href="https://github.com/1084" rel="noopener">GitHub</a></span>
   </footer>
 </div>
+<script>
+  // Count clicks on the Vitamin Village buttons as one event, so the dashboard shows
+  // how many visitors went on to open the app. Nothing runs inside the app itself.
+  document.querySelectorAll('a[href="./vitamin-village/"]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      if (window.goatcounter && window.goatcounter.count) {
+        window.goatcounter.count({ path: 'event/open-vitamin-village', title: 'Open Vitamin Village', event: true });
+      }
+    });
+  });
+</script>
 </body>
 </html>
