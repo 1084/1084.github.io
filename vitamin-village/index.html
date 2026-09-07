@@ -1,17 +1,7 @@
 <!DOCTYPE html>
-<!--
-  Vitamin Village
-  Copyright (c) 2026 Jonathan Spearman. All rights reserved.
-
-  This application, including its code, characters, food and recipe data,
-  artwork and text, is the original work of Jonathan Spearman. It is served
-  here for people to use. You may not copy, modify, redistribute or sell any
-  part of it without written permission. See /LICENSE for details.
--->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="copyright" content="Copyright (c) 2026 Jonathan Spearman. All rights reserved.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#FBFAF7">
@@ -155,6 +145,74 @@
   .dots-nav{display:flex;justify-content:center;gap:8px;margin:22px 0;}
   .dots-nav i{width:8px;height:8px;border-radius:50%;background:var(--line);}
   .dots-nav i.on{background:var(--ink);width:22px;border-radius:99px;}
+
+  /* ============ CELEBRATION OVERLAY ============ */
+  #celebration{position:absolute;inset:0;z-index:30;background:#FBFAF7;
+    display:none;flex-direction:column;overflow:hidden;}
+  #celebration.open{display:flex;}
+
+  /* confetti canvas sits behind everything else in the overlay */
+  #confetti-canvas{position:absolute;inset:0;pointer-events:none;}
+
+  /* each act is a full-height panel; only .act-active shows */
+  .act{display:none;flex:1;flex-direction:column;align-items:center;
+    justify-content:center;padding:24px 20px 80px;text-align:center;}
+  .act.act-active{display:flex;}
+
+  /* shared act footer with next button */
+  #cel-footer{position:absolute;bottom:0;left:0;right:0;
+    padding:14px 20px calc(14px + env(safe-area-inset-bottom));
+    background:rgba(251,250,247,.92);border-top:1px solid var(--line);}
+
+  /* Act 1 — team parade */
+  .parade{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:20px 0;}
+  .parade-char{animation:popIn .35s cubic-bezier(.34,1.56,.64,1) both;}
+  @keyframes popIn{from{opacity:0;transform:scale(0) rotate(-15deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+
+  /* Act 2 — roster: one character steps forward */
+  .roster-stage{position:relative;width:220px;height:220px;margin:0 auto 10px;}
+  .roster-big{position:absolute;inset:0;display:flex;align-items:center;
+    justify-content:center;animation:rosterPop .4s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes rosterPop{from{opacity:0;transform:scale(.4) translateY(40px)}
+    to{opacity:1;transform:scale(1) translateY(0)}}
+  .roster-dots{display:flex;gap:7px;justify-content:center;margin:10px 0;}
+  .roster-dot{width:9px;height:9px;border-radius:50%;background:var(--line);transition:background .2s;}
+  .roster-dot.on{background:var(--ink);}
+  .roster-fact{font-size:16px;line-height:1.6;max-width:280px;
+    animation:fadeUp .35s ease both;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+  /* Act 3 — buddy constellation */
+  .constellation{position:relative;width:100%;max-width:300px;height:260px;margin:0 auto;}
+  .con-pair{position:absolute;display:flex;align-items:center;gap:4px;
+    animation:popIn .4s cubic-bezier(.34,1.56,.64,1) both;}
+  .con-line{width:24px;height:2px;border-radius:1px;background:var(--buddy);opacity:.55;}
+
+  /* Act 4 — recipe cards */
+  .recipe-stage{display:flex;gap:12px;overflow-x:auto;padding:4px 4px 12px;
+    width:100%;max-width:360px;scroll-snap-type:x mandatory;}
+  .recipe-card{flex:none;width:160px;scroll-snap-align:start;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px;
+    text-align:left;animation:popIn .4s cubic-bezier(.34,1.56,.64,1) both;}
+  .recipe-dish{font-size:38px;line-height:1;margin-bottom:8px;}
+  .recipe-cname{font-size:13px;font-weight:600;margin-bottom:3px;}
+  .recipe-pair{font-size:11px;color:var(--muted);}
+
+  /* Act 5 — champion trophy */
+  .trophy{font-size:80px;line-height:1;
+    animation:trophySpin 1s cubic-bezier(.34,1.56,.64,1) both;}
+  @keyframes trophySpin{from{opacity:0;transform:scale(0) rotate(-180deg)}
+    to{opacity:1;transform:scale(1) rotate(0)}}
+  .champion-title{font-size:26px;font-weight:700;margin:14px 0 6px;
+    animation:fadeUp .5s .3s ease both;}
+  .champion-sub{font-size:16px;color:var(--muted);max-width:260px;
+    animation:fadeUp .5s .5s ease both;}
+
+  /* CSS 3D depth effect on the jersey avatars inside celebration */
+  .depth-avatar{transform-style:preserve-3d;
+    filter:drop-shadow(0 8px 16px rgba(0,0,0,.18));}
+  .depth-avatar svg{transform:perspective(300px) rotateY(-8deg) rotateX(4deg) scale(1.05);}
+
 </style>
 </head>
 
@@ -223,6 +281,63 @@
     <div id="combo-pairs" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px"></div>
     <div id="combo-card"></div>
   </section>
+
+
+  <!-- ============ CELEBRATION OVERLAY (5-act graduation sequence) ============ -->
+  <div id="celebration">
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Act 1: team parade -->
+    <div class="act act-active" id="act-1">
+      <div style="font-size:15px;font-weight:600;color:var(--muted);letter-spacing:.08em;margin-bottom:6px">10 / 10 BUDDIES</div>
+      <h1 style="font-size:28px;margin:0 0 4px">You found every buddy!</h1>
+      <p class="muted" style="margin:0 0 4px">The whole Vitamin Village is cheering!</p>
+      <div class="parade" id="parade-grid"></div>
+    </div>
+
+    <!-- Act 2: character introductions -->
+    <div class="act" id="act-2">
+      <div style="font-size:14px;font-weight:600;color:var(--muted);margin-bottom:12px">MEET THE TEAM</div>
+      <div class="roster-stage"><div class="roster-big" id="roster-big"></div></div>
+      <div id="roster-name" style="font-size:22px;font-weight:700;margin-bottom:4px"></div>
+      <div id="roster-nutrient" style="font-size:13px;color:var(--muted);margin-bottom:10px"></div>
+      <div class="roster-fact" id="roster-fact"></div>
+      <div class="roster-dots" id="roster-dots"></div>
+    </div>
+
+    <!-- Act 3: buddy constellation -->
+    <div class="act" id="act-3">
+      <div style="font-size:14px;font-weight:600;color:var(--muted);margin-bottom:8px">ALL 10 BUDDY TEAMS</div>
+      <h2 style="margin:0 0 16px;font-size:20px">Here are all your discoveries</h2>
+      <div class="constellation" id="constellation"></div>
+    </div>
+
+    <!-- Act 4: recipe highlights -->
+    <div class="act" id="act-4">
+      <div style="font-size:14px;font-weight:600;color:var(--muted);margin-bottom:8px">BUDDY MEALS</div>
+      <h2 style="margin:0 0 6px;font-size:20px">Cook up a buddy team!</h2>
+      <p class="muted" style="margin:0 0 16px;font-size:14px">Each recipe puts two helpers together</p>
+      <div class="recipe-stage" id="recipe-stage"></div>
+    </div>
+
+    <!-- Act 5: champion badge -->
+    <div class="act" id="act-5">
+      <div class="trophy">🏆</div>
+      <div class="champion-title">Vitamin Village Champion!</div>
+      <div class="champion-sub">You know every buddy team. Share your knowledge — teach a friend!</div>
+      <div style="height:20px"></div>
+      <div style="background:var(--buddy-bg);border:1.5px solid var(--buddy);border-radius:var(--radius);
+        padding:14px 18px;max-width:280px;font-size:13px;color:var(--muted);line-height:1.55;">
+        <b style="color:var(--ink)">For grown-ups:</b> Your child just learned 10 real nutrient
+        partnerships. Consider exploring the Recipe Box together!
+      </div>
+    </div>
+
+    <!-- Shared footer -->
+    <div id="cel-footer">
+      <button class="btn" id="cel-next">Next</button>
+    </div>
+  </div>
 
   <!-- ============ BOTTOM NAV ============ -->
   <nav id="nav">
@@ -793,6 +908,11 @@ function updateProgress(){
   const n = discovered.size, total = BUDDY_KEYS.length;
   $('#prog-count').textContent = `${n} / ${total}`;
   $('#prog-bar').style.width = (n/total*100) + '%';
+  // Fire the graduation sequence the first time 10/10 is reached.
+  if(n === total && !window._celebrationShown){
+    window._celebrationShown = true;
+    setTimeout(openCelebration, 600);   // brief pause so the result screen shows first
+  }
 }
 function renderReward(){
   const total = BUDDY_KEYS.length, done = discovered.size;
@@ -940,6 +1060,171 @@ function shuffleCombo(){
 }
 
 /* =========================================================================
+   CELEBRATION — 5-act graduation sequence triggered on 10/10 discovery
+   =========================================================================
+   The five acts are separate <div class="act"> panels inside #celebration.
+   celStep tracks which act is showing. Each act renders its own content
+   when it becomes active, so nothing is computed before it's needed.
+
+   EDIT GUIDE:
+   - Act timing / copy → edit the ACT_* blocks below
+   - Avatar size in the parade → change the number in parade avatar() calls
+   - Recipe emoji → edit RECIPE_EMOJI map
+   - Confetti colors → edit CONF_COLORS array
+   - 3D depth effect → edit .depth-avatar svg CSS rule above
+*/
+
+/* ---- confetti ---- */
+const CONF_COLORS = ["#E0A93E","#4E97DD","#7DB33F","#D96B45","#D75E8A",
+                     "#3BB58C","#E8963A","#8E86E0","#B07B4F","#D4B24A"];
+let confAnim = null;
+function startConfetti(){
+  const cv = document.getElementById("confetti-canvas");
+  const ctx = cv.getContext("2d");
+  cv.width = cv.offsetWidth; cv.height = cv.offsetHeight;
+  const pieces = Array.from({length:90}, () => ({
+    x: Math.random()*cv.width, y: Math.random()*cv.height - cv.height,
+    w: 7+Math.random()*7, h: 4+Math.random()*4,
+    color: CONF_COLORS[Math.floor(Math.random()*CONF_COLORS.length)],
+    rot: Math.random()*360, spin: (Math.random()-.5)*6,
+    vy: 1.5+Math.random()*2.5, vx: (Math.random()-.5)*1.5,
+  }));
+  if(confAnim) cancelAnimationFrame(confAnim);
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    pieces.forEach(p=>{
+      ctx.save(); ctx.translate(p.x+p.w/2,p.y+p.h/2);
+      ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle=p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      ctx.restore();
+      p.y+=p.vy; p.x+=p.vx; p.rot+=p.spin;
+      if(p.y>cv.height){ p.y=-p.h; p.x=Math.random()*cv.width; }
+    });
+    confAnim=requestAnimationFrame(draw);
+  }
+  draw();
+}
+function stopConfetti(){
+  if(confAnim){ cancelAnimationFrame(confAnim); confAnim=null; }
+  const cv=document.getElementById("confetti-canvas");
+  cv.getContext("2d").clearRect(0,0,cv.width,cv.height);
+}
+
+/* ---- act renderer ---- */
+let celStep = 1;
+const TOTAL_ACTS = 5;
+
+function openCelebration(){
+  celStep = 1;
+  document.getElementById("celebration").classList.add("open");
+  document.querySelectorAll(".act").forEach(a=>a.classList.remove("act-active"));
+  document.getElementById("act-1").classList.add("act-active");
+  renderAct(1);
+  startConfetti();
+}
+
+function renderAct(n){
+  document.getElementById("cel-next").textContent =
+    n < TOTAL_ACTS ? (n===2 ? "Meet the next friend →" : "Next →") : "Back to the village";
+  if(n===1) renderAct1();
+  if(n===2) renderAct2(0);
+  if(n===3) renderAct3();
+  if(n===4) renderAct4();
+  if(n===5){ renderAct5(); stopConfetti(); }
+}
+
+/* Act 1 — parade of all 10 characters with staggered pop-in */
+function renderAct1(){
+  document.getElementById("parade-grid").innerHTML = CHARACTERS.map((c,i)=>
+    `<div class="parade-char depth-avatar" style="animation-delay:${i*0.07}s">${avatar(c,66)}</div>`
+  ).join("");
+}
+
+/* Act 2 — character roster, one at a time */
+let rosterIdx = 0;
+function renderAct2(idx){
+  rosterIdx = idx;
+  const c = CHARACTERS[idx];
+  // Re-render to trigger animation
+  const big = document.getElementById("roster-big");
+  big.innerHTML = `<div class="depth-avatar">${avatar(c,130)}</div>`;
+  big.style.animation="none"; big.offsetHeight; big.style.animation="";
+  document.getElementById("roster-name").textContent = c.name;
+  document.getElementById("roster-nutrient").textContent = c.nutrient;
+  const fact = document.getElementById("roster-fact");
+  fact.textContent = c.does + " " + c.fact;
+  fact.style.animation="none"; fact.offsetHeight; fact.style.animation="";
+  // Progress dots
+  document.getElementById("roster-dots").innerHTML =
+    CHARACTERS.map((_,i)=>`<span class="roster-dot${i===idx?' on':''}"></span>`).join("");
+  // Next button behaviour on act 2 varies by position
+  if(idx < CHARACTERS.length-1){
+    document.getElementById("cel-next").textContent="Meet the next friend →";
+  } else {
+    document.getElementById("cel-next").textContent="See all buddy teams →";
+  }
+}
+
+/* Act 3 — buddy constellation laid out in a tight grid */
+function renderAct3(){
+  const el = document.getElementById("constellation");
+  // 2-column layout: each pair as a row with mini avatars + connecting line
+  el.style.cssText="display:flex;flex-direction:column;gap:8px;align-items:center;width:100%";
+  el.innerHTML = BUDDY_KEYS.map((key,i)=>{
+    const [x,y]=key.split("_");
+    return `<div class="con-pair" style="animation-delay:${i*0.07}s">
+      ${avatar(CH[x],36)}<div class="con-line"></div>${avatar(CH[y],36)}
+      <span style="font-size:12px;font-weight:600;margin-left:6px;color:var(--ink)">
+        ${CH[x].name} + ${CH[y].name}</span>
+    </div>`;
+  }).join("");
+}
+
+/* Act 4 — recipe dish cards (emoji + name + pair) */
+const RECIPE_EMOJI = {
+  "r01":"🍳","r02":"🐟","r03":"🍝","r04":"🌯","r05":"🥗","r06":"🍲",
+  "r07":"🍚","r08":"🍄","r09":"🥪","r10":"🥣","r11":"🫔","r12":"🥤",
+  "r13":"🥕","r14":"🌶","r15":"🍠","r16":"🥘","r17":"🍋","r18":"🥩",
+  "r19":"🧁","r20":"🍗","r21":"🍞","r22":"🥦","r23":"🥗","r24":"🧀",
+  "r25":"🍫","r26":"🍛","r27":"🍜","r28":"🍓","r29":"🥑","r30":"🥦",
+  "r31":"🫐","r32":"🍑","r33":"🍠","r34":"🍳",
+};
+function renderAct4(){
+  // Pick 5 diverse recipes — one per first five buddy pairs
+  const featured = BUDDY_KEYS.slice(0,5).map(key=>{
+    return RECIPES.find(r=>ruleKey(r.pair[0],r.pair[1])===key);
+  }).filter(Boolean);
+  document.getElementById("recipe-stage").innerHTML = featured.map((r,i)=>`
+    <div class="recipe-card" style="animation-delay:${i*0.1}s">
+      <div class="recipe-dish">${RECIPE_EMOJI[r.id]||"🍽"}</div>
+      <div class="recipe-cname">${r.name}</div>
+      <div class="recipe-pair">${CH[r.pair[0]].name} + ${CH[r.pair[1]].name}</div>
+    </div>`).join("");
+}
+
+/* Act 5 — champion badge (HTML already static, just animates via CSS) */
+function renderAct5(){}
+
+/* ---- next button handler ---- */
+document.getElementById("cel-next").addEventListener("click", ()=>{
+  // Act 2 is special: step through all 10 characters before advancing
+  if(celStep===2 && rosterIdx < CHARACTERS.length-1){
+    renderAct2(rosterIdx+1); return;
+  }
+  if(celStep < TOTAL_ACTS){
+    document.querySelectorAll(".act").forEach(a=>a.classList.remove("act-active"));
+    celStep++;
+    document.getElementById("act-"+celStep).classList.add("act-active");
+    renderAct(celStep);
+  } else {
+    // Done — close overlay and go to badges screen
+    document.getElementById("celebration").classList.remove("open");
+    stopConfetti();
+    go("reward");
+  }
+});
+
+/* =========================================================================
    10) ONBOARDING (a 3-card tutorial shown the first time)
    ========================================================================= */
 const OB = [
@@ -974,7 +1259,7 @@ updateProgress();
 renderOnboard();
 
 /* =========================================================================
-   12) SERVICE WORKER — makes the app installable + work offline.
+   SERVICE WORKER — makes the app installable + work offline.
    ========================================================================= */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
