@@ -8,7 +8,7 @@
    phone knows to throw away the old copy and fetch your new one. If your edits
    "don't show up" on a phone, this is almost always why.
 */
-const CACHE_NAME = "vitamin-village-v1";
+const CACHE_NAME = "vitamin-village-v2";
 const FILES = [
   "./",
   "./index.html",
