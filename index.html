@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jonathan Spearman · Workshop</title>
+<meta name="description" content="Apps and guides by Jonathan Spearman. Try what's ready, see what's coming, read the guides.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f6b4b'/%3E%3Cpath d='M9 22V10h4l3 8 3-8h4v12h-3v-7l-3 7h-2l-3-7v7z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #f3f4f0; --surface: #ffffff; --surface-2: #eaece6;
+    --ink: #1c2321; --ink-2: #4f5854; --ink-3: #7f8884;
+    --line: #dcdfd8; --line-strong: #c3c8bf;
+    --accent: #2f6b4b; --accent-ink: #ffffff; --accent-soft: #e2efe6;
+    --st-concept-bg: #e7e4f5; --st-concept-fg: #5b4a9e;
+    --st-proto-bg: #fbeacb;   --st-proto-fg: #8a5a0b;
+    --st-test-bg: #dcecf7;    --st-test-fg: #1f5f8b;
+    --st-live-bg: #dcefe1;    --st-live-fg: #22683f;
+    --font-display: "Manrope", "Helvetica Neue", Arial, sans-serif;
+    --font-body: "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif;
+    --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121614; --surface: #1a1f1c; --surface-2: #232925;
+      --ink: #e7eae6; --ink-2: #aeb5b0; --ink-3: #7f8884;
+      --line: #2b322e; --line-strong: #3c453f;
+      --accent: #7cc39a; --accent-ink: #121614; --accent-soft: #1d2f25;
+      --st-concept-bg: #2a2542; --st-concept-fg: #b9a9f0;
+      --st-proto-bg: #3a2d10; --st-proto-fg: #f0c169;
+      --st-test-bg: #16303f; --st-test-fg: #86c4ee;
+      --st-live-bg: #163122; --st-live-fg: #86d9a5;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px 72px; }
+
+  nav.top { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; font-family: var(--font-mono); font-size: 13px; }
+  nav.top .logo { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+  nav.top .logo i { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); display: inline-grid; place-items: center; color: var(--accent-ink); font-style: normal; font-size: 12px; font-weight: 800; }
+  nav.top .links { display: flex; gap: 20px; }
+  nav.top .links a { color: var(--ink-2); text-decoration: none; }
+  nav.top .links a:hover { color: var(--ink); }
+
+  .hero { padding: 40px 0 36px; border-bottom: 1px solid var(--line); }
+  .hero h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(32px, 5vw, 48px); line-height: 1.05; letter-spacing: -0.025em; margin: 0 0 14px; max-width: 18ch; text-wrap: balance; }
+  .hero p { font-size: 19px; color: var(--ink-2); max-width: 58ch; margin: 0; text-wrap: pretty; }
+
+  .featured { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; align-items: center; margin: 36px 0 48px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 26px 28px; }
+  .featured .eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--st-proto-fg); margin: 0 0 8px; }
+  .featured h2 { font-family: var(--font-display); font-weight: 800; font-size: 28px; letter-spacing: -0.02em; margin: 0 0 8px; }
+  .featured p { margin: 0 0 16px; color: var(--ink-2); }
+  .featured .how { display: grid; gap: 8px; font-size: 15px; color: var(--ink-2); background: var(--surface-2); border-radius: 10px; padding: 14px 16px; }
+  .featured .how b { color: var(--ink); font-weight: 600; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; font-size: 15px; padding: 10px 16px; border-radius: 10px; text-decoration: none; border: 1px solid var(--line-strong); color: var(--ink); background: var(--surface); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn:hover { filter: brightness(0.97); }
+
+  h2.sec { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; margin: 0 0 6px; }
+  .sec-note { color: var(--ink-3); font-size: 15px; margin: 0 0 18px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 48px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .card .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .card h3 { font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: -0.01em; margin: 0; line-height: 1.2; }
+  .card p { margin: 0; color: var(--ink-2); font-size: 15.5px; }
+  .stage { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
+  .stage.concept { background: var(--st-concept-bg); color: var(--st-concept-fg); }
+  .stage.prototype { background: var(--st-proto-bg); color: var(--st-proto-fg); }
+  .stage.testing { background: var(--st-test-bg); color: var(--st-test-fg); }
+  .stage.live { background: var(--st-live-bg); color: var(--st-live-fg); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-2); background: var(--surface-2); padding: 2px 8px; border-radius: 5px; }
+  .card .cta { margin-top: auto; padding-top: 8px; font-size: 14.5px; }
+  .card .cta .soon { color: var(--ink-3); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--ink-3); margin: -30px 0 48px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .guides { display: grid; gap: 10px; margin-bottom: 48px; }
+  .guide { display: grid; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; text-decoration: none; color: inherit; }
+  .guide:hover { border-color: var(--line-strong); }
+  .guide .t { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--ink); }
+  .guide .b { color: var(--ink-2); font-size: 15px; }
+  .guide .m { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+
+  footer { border-top: 1px solid var(--line); padding-top: 20px; font-size: 14px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+  footer a { color: var(--ink-2); }
+
+  @media (max-width: 720px) {
+    .featured { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: 1fr; }
+    nav.top .links { gap: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top">
+    <a class="logo" href="./"><i>JS</i> Jonathan Spearman</a>
+    <div class="links"><a href="#projects">Projects</a><a href="#guides">Guides</a><a href="https://github.com/1084" rel="noopener">GitHub</a></div>
+  </nav>
+
+  <section class="hero">
+    <h1>Small apps, built in the open, one stage at a time.</h1>
+    <p>This is where my projects live as they grow from idea to something you can install. Try what's ready, see what's next, and read the guides I write along the way.</p>
+  </section>
+
+  <section class="featured" id="try">
+    <div>
+      <p class="eyebrow">Ready to try · prototype</p>
+      <h2>Vitamin Village</h2>
+      <p>A game for kids aged 7 to 9 about the tiny helpers inside them: which vitamins are buddies, which need space, and what foods bring them along. Works fully offline and collects nothing, by design.</p>
+      <a class="btn primary" href="./vitamin-village/">Open Vitamin Village</a>
+    </div>
+    <div class="how">
+      <div><b>On iPhone:</b> open the link in Safari, tap Share, then <em>Add to Home Screen</em>.</div>
+      <div><b>On Android:</b> open the link in Chrome, tap the menu, then <em>Install app</em>.</div>
+      <div><b>On a computer:</b> it just runs in the browser.</div>
+      <div>It's a prototype: expect rough edges, and tell me what confused you.</div>
+    </div>
+  </section>
+
+  <h2 class="sec" id="projects">Projects</h2>
+  <p class="sec-note">Every project moves through the same stages: concept, prototype, testing, live.</p>
+  <div class="grid">
+    <article class="card">
+      <div class="head"><h3>Vitamin Village</h3><span class="stage prototype">Prototype</span></div>
+      <p>Offline-first kids' app about vitamins: ten characters, 141 foods, 34 recipes, badges to earn. No accounts, no tracking.</p>
+      <div class="chips"><span class="chip">PWA</span><span class="chip">offline</span><span class="chip">no data collected</span></div>
+      <div class="cta"><a href="./vitamin-village/">Open it →</a></div>
+    </article>
+    <article class="card">
+      <div class="head"><h3>VCA</h3><span class="stage prototype">Prototype</span></div>
+      <p>Video calls for small groups, up to ten people, with a shared Notes, Code, and Whiteboard workspace that everyone can edit at the same time.</p>
+      <div class="chips"><span class="chip">WebRTC</span><span class="chip">real-time collaboration</span><span class="chip">screen share</span></div>
+      <div class="cta"><span class="soon">Private testing next. A link will appear here when it's ready for invites.</span></div>
+    </article>
+    <article class="card">
+      <div class="head"><h3>visual-math</h3><span class="stage concept">Concept</span></div>
+      <p>A visualization-first way to learn university math, from trigonometry through calculus and linear algebra to the math behind physics. Every idea taught by interacting with the picture.</p>
+      <div class="chips"><span class="chip">interactive lessons</span><span class="chip">mastery tracking</span><span class="chip">unlimited practice</span></div>
+      <div class="cta"><span class="soon">Designing the curriculum and first lessons.</span></div>
+    </article>
+    <article class="card">
+      <div class="head"><h3>Proximity Protocol</h3><span class="stage concept">Concept</span></div>
+      <p>The foundation for a privacy-first way to meet people nearby: rotating anonymous credentials, profiles that unlock only when both people agree, and tiered sharing for groups and contacts.</p>
+      <div class="chips"><span class="chip">privacy</span><span class="chip">cryptography</span><span class="chip">research</span></div>
+      <div class="cta"><span class="soon">Protocol reference complete; deciding what the app looks like.</span></div>
+    </article>
+  </div>
+
+  <h2 class="sec" id="guides">Guides</h2>
+  <p class="sec-note">Things I learned while building, written up for the next person.</p>
+  <div class="guides">
+    <a class="guide" href="./guides/claude-code-field-guide.html">
+      <span class="t">Claude Code Field Guide</span>
+      <span class="b">From a blank terminal to a working daily habit: install Claude Code, hold a real conversation with your codebase, keep it under control, and teach it how your project works.</span>
+      <span class="m">~30 min read · September 2026</span>
+    </a>
+  </div>
+
+  <footer>
+    <span>© 2026 Jonathan Spearman</span>
+    <span><a href="https://github.com/1084" rel="noopener">GitHub</a></span>
+  </footer>
+</div>
+</body>
+</html>
