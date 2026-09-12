@@ -223,6 +223,29 @@
     filter:drop-shadow(0 8px 16px rgba(0,0,0,.18));}
   .depth-avatar svg{transform:perspective(300px) rotateY(-8deg) rotateX(4deg) scale(1.05);}
 
+
+  /* ---------- Mix & Match (explore mode) ---------- */
+  .mm-label{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.05em;margin:12px 0 6px;}
+  .mm-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .mm-chip{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;
+    padding:7px 12px;font-size:12px;font-weight:600;}
+  .mm-chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .mm-chip.ghost{border-style:dashed;color:var(--muted);}
+  .mm-side{display:flex;gap:6px;margin-bottom:4px;}
+  .mm-side button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:var(--radius-sm);
+    padding:8px 6px;font-size:12px;font-weight:600;color:var(--muted);}
+  .mm-side button.on{border-color:var(--ink);color:var(--ink);background:var(--fine-bg);}
+  .mm-row{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    padding:9px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+  .mm-row .n{font-size:14px;font-weight:600;}
+  .mm-row .r{font-size:11px;color:var(--buddy);font-weight:600;}
+  .mm-heart{background:none;font-size:18px;padding:0 2px;line-height:1;color:#C9C6BD;}
+  .mm-heart.on{color:#D75E8A;}
+  .mm-double{background:var(--buddy-bg);border:1px solid var(--buddy);border-radius:var(--radius-sm);
+    padding:10px 12px;font-size:13px;margin-bottom:10px;}
+  .mm-foot{font-size:11px;color:var(--muted);margin:6px 0 4px;}
+  .mm-saved-head{display:flex;justify-content:space-between;align-items:center;margin-top:18px;}
+  .mm-x{background:none;color:var(--muted);font-size:16px;padding:0 4px;}
 </style>
 </head>
 
@@ -238,7 +261,7 @@
 
   <!-- ============ SCREEN: VILLAGE ============ -->
   <section class="screen active" id="s-village">
-    <h1>Vitamin Village <span style="font-size:11px;font-weight:600;color:var(--muted);vertical-align:middle;margin-left:6px">v3</span></h1>
+    <h1>Vitamin Village <span style="font-size:11px;font-weight:600;color:var(--muted);vertical-align:middle;margin-left:6px">v4</span></h1>
     <div class="progress">
       <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;">
         <span>Buddies discovered</span><span id="prog-count">0 / 10</span>
@@ -287,9 +310,11 @@
   <!-- ============ SCREEN: COMBO MAKER ============ -->
   <section class="screen" id="s-combo">
     <h1>Mix &amp; Match</h1>
-    <p class="muted" style="margin-top:-4px">Pick a buddy team and get a food idea to try.</p>
-    <div id="combo-pairs" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px"></div>
+    <p class="muted" style="margin-top:-4px">Pick a buddy team, then a food you have.</p>
+    <div id="combo-pairs" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px"></div>
+    <div id="combo-anchor"></div>
     <div id="combo-card"></div>
+    <div id="combo-saved"></div>
   </section>
 
 
@@ -789,8 +814,36 @@ function flavorOK(f1, f2){
    ========================================================================= */
 const pick = [];                 // the 1-2 characters currently tapped
 const discovered = new Set();    // buddy pair keys the player has found
-// (To make this survive closing the app, you'd later save `discovered` to
-//  the browser with localStorage. Left out here so it runs anywhere.)
+const savedIdeas = [];           // Mix & Match ideas the user hearted: {pair, a, b}
+let testMode = false;            // true under ?test=... — nothing is saved
+
+/* ---- On-device saving (localStorage) ------------------------------------
+   Everything below stays on the phone. Nothing is sent anywhere, so this
+   keeps the "collects nothing" promise while letting progress survive a
+   reload. Each try/catch means the app still runs if storage is blocked.  */
+const STORE = { discovered:"vv-discovered", celebrated:"vv-celebrated",
+                ideas:"vv-ideas", onboarded:"vv-onboarded" };
+function loadState(){
+  try{
+    JSON.parse(localStorage.getItem(STORE.discovered) || "[]").forEach(k => discovered.add(k));
+    JSON.parse(localStorage.getItem(STORE.ideas) || "[]").forEach(i => savedIdeas.push(i));
+    if(localStorage.getItem(STORE.celebrated) === "1") window._celebrationShown = true;
+  }catch(e){}
+}
+function saveState(){
+  if(testMode) return;
+  try{
+    localStorage.setItem(STORE.discovered, JSON.stringify([...discovered]));
+    localStorage.setItem(STORE.ideas, JSON.stringify(savedIdeas));
+    if(window._celebrationShown) localStorage.setItem(STORE.celebrated, "1");
+  }catch(e){}
+}
+function resetProgress(){
+  if(!confirm("Start the badge book over? Saved recipe ideas are kept.")) return;
+  discovered.clear(); window._celebrationShown = false;
+  try{ localStorage.removeItem(STORE.discovered); localStorage.removeItem(STORE.celebrated); }catch(e){}
+  updateProgress(); renderReward();
+}
 
 /* =========================================================================
    3) THE CHARACTER ART  — edit avatar() to change how everyone looks!
@@ -886,7 +939,7 @@ function showResult(a, b){
 
   // If this is a NEW buddy pair, add it to the collection.
   let isNew = false;
-  if(rule.type === "buddy" && !discovered.has(key)){ discovered.add(key); isNew = true; }
+  if(rule.type === "buddy" && !discovered.has(key)){ discovered.add(key); isNew = true; saveState(); }
 
   // A matching recipe to offer (only for buddy pairs).
   const recipe = RECIPES.find(r => ruleKey(r.pair[0], r.pair[1]) === key);
@@ -920,7 +973,7 @@ function updateProgress(){
   $('#prog-bar').style.width = (n/total*100) + '%';
   // Fire the graduation sequence the first time 10/10 is reached.
   if(n === total && !window._celebrationShown){
-    window._celebrationShown = true;
+    window._celebrationShown = true; saveState();
     setTimeout(openCelebration, 600);   // brief pause so the result screen shows first
   }
 }
@@ -939,7 +992,9 @@ function renderReward(){
        <h2 style="margin:6px 0">You found every buddy!</h2>
        <p class="muted" style="margin:0">You're a Vitamin Village champion.</p></div>`
      : `<p class="muted">Find all ${total} buddy pairs in the village to fill your badge book. ${done} down, ${total-done} to go!</p>`}
-    <div class="badgegrid">${badges}</div>`;
+    <div class="badgegrid">${badges}</div>
+    <div style="height:18px"></div>
+    <button class="btn light" onclick="resetProgress()" style="font-size:14px">Start over (for grown-ups)</button>`;
 }
 
 /* =========================================================================
@@ -997,76 +1052,168 @@ function checkRow(text){
 }
 
 /* =========================================================================
-   9b) COMBO MAKER — suggests buddy-friendly food combos from the FOODS data
+   9b) MIX & MATCH — explore buddy-friendly food combos from the FOODS data
    =========================================================================
-   This does NOT invent recipes. It surfaces pairs of real foods that carry
-   the two nutrients of a buddy team, filtered so the flavours aren't absurd.
-   The grown-up still decides what actually tastes good — that's the point.
+   Three steps: pick a buddy team → pick a food you have → see every
+   flavour-friendly partner that brings the OTHER nutrient, grouped by food
+   family. Heart a combo to save it on this device. It never invents recipes;
+   a grown-up still decides what tastes good.
 */
-let comboPair = null;
+let comboPair = null;     // e.g. "c_iron"
+let anchorSide = 0;       // 0 = start from the first nutrient's foods, 1 = the second's
+let comboFood = null;     // the food the user anchored on (name)
+let anchorQuery = "";     // search text in the food picker
+let showAllFoods = false;
 
 function foodsWith(nid){ return FOODS.filter(f => f.has.includes(nid)); }
+const stem = s => s.toLowerCase().replace(/s$/, "");
+function hasFood(text, name){ return text.toLowerCase().includes(stem(name)); }
 
+/* A hand-written recipe that already uses both foods for this team, if any */
+function recipeFor(pairKey, a, b){
+  return RECIPES.find(r => ruleKey(r.pair[0], r.pair[1]) === pairKey &&
+    hasFood(r.ingredients.join(" ") + " " + r.shopping.join(" "), a) &&
+    hasFood(r.ingredients.join(" ") + " " + r.shopping.join(" "), b));
+}
+
+/* ---- saved ideas ---- */
+function ideaKey(pair, a, b){ return pair + "|" + [a,b].sort().join("|"); }
+function isSaved(pair, a, b){ const k = ideaKey(pair,a,b); return savedIdeas.some(i => ideaKey(i.pair,i.a,i.b) === k); }
+function toggleSave(pair, a, b){
+  const k = ideaKey(pair,a,b);
+  const i = savedIdeas.findIndex(x => ideaKey(x.pair,x.a,x.b) === k);
+  if(i > -1) savedIdeas.splice(i,1); else savedIdeas.push({pair, a, b});
+  saveState(); renderPartners(); renderSaved();
+}
+function removeIdea(i){ savedIdeas.splice(i,1); saveState(); renderPartners(); renderSaved(); }
+
+/* ---- step 1: buddy team chips ---- */
 function renderComboPairs(){
   $('#combo-pairs').innerHTML = BUDDY_KEYS.map(key => {
     const [x,y] = key.split('_');
-    const on = comboPair === key;
-    return `<button onclick="pickCombo('${key}')" style="border:1.5px solid ${on?'var(--ink)':'var(--line)'};
-      background:${on?'var(--ink)':'#fff'};color:${on?'#fff':'var(--ink)'};border-radius:999px;
-      padding:7px 12px;font-size:12px;font-weight:600">${CH[x].name} + ${CH[y].name}</button>`;
-  }).join('') + `<button onclick="pickCombo(BUDDY_KEYS[Math.floor(Math.random()*BUDDY_KEYS.length)])"
-      style="border:1.5px dashed var(--line);background:#fff;border-radius:999px;padding:7px 12px;
-      font-size:12px;font-weight:600">Surprise me</button>`;
-  if(comboPair) shuffleCombo(); else
-    $('#combo-card').innerHTML = `<p class="muted center" style="margin-top:24px">Choose a buddy team above to see a food idea.</p>`;
+    return `<button class="mm-chip ${comboPair===key?'on':''}" onclick="pickCombo('${key}')">${CH[x].name} + ${CH[y].name}</button>`;
+  }).join('') + `<button class="mm-chip ghost" onclick="surprise()">Surprise me</button>`;
+  renderAnchor(); renderPartners(); renderSaved();
 }
-function pickCombo(key){ comboPair = key; renderComboPairs(); }
+function pickCombo(key){
+  if(comboPair !== key){ comboFood = null; anchorQuery = ""; showAllFoods = false; anchorSide = 0; }
+  comboPair = key; renderComboPairs();
+}
+function surprise(){
+  comboPair = BUDDY_KEYS[Math.floor(Math.random()*BUDDY_KEYS.length)];
+  anchorSide = Math.random() < .5 ? 0 : 1;
+  const pool = anchorFoods();
+  comboFood = pool.length ? pool[Math.floor(Math.random()*pool.length)].name : null;
+  anchorQuery = ""; showAllFoods = false;
+  renderComboPairs();
+}
 
-function shuffleCombo(){
+/* which nutrient we start from, and which we're looking for */
+function sides(){
   const [x,y] = comboPair.split('_');
-  const A = foodsWith(x), B = foodsWith(y);
+  return anchorSide === 0 ? [x,y] : [y,x];
+}
+/* foods on the anchor side that have at least one flavour-friendly partner */
+function anchorFoods(){
+  const [from, to] = sides();
+  const targets = foodsWith(to);
+  return foodsWith(from).filter(fa => targets.some(fb => fb.name !== fa.name && flavorOK(fa, fb)));
+}
 
-  // Build every flavour-compatible combo, skipping "same food twice".
-  const options = [];
-  A.forEach(fa => B.forEach(fb => {
-    if(fa.name !== fb.name && flavorOK(fa, fb)) options.push([fa, fb]);
-  }));
-  // Foods that carry BOTH nutrients are the neatest answer of all — a whole
-  // buddy team in one ingredient. Show those sometimes.
-  const doubles = FOODS.filter(f => f.has.includes(x) && f.has.includes(y));
+/* ---- step 2: pick a food you have ---- */
+function renderAnchor(){
+  const el = $('#combo-anchor');
+  if(!comboPair){ el.innerHTML = ""; return; }
+  const [from, to] = sides();
+  const [x,y] = comboPair.split('_');
+  let pool = anchorFoods();
+  const q = anchorQuery.trim().toLowerCase();
+  if(q) pool = pool.filter(f => f.name.toLowerCase().includes(q) || f.cat.toLowerCase().includes(q));
+  const LIMIT = 8;
+  const shown = (showAllFoods || q) ? pool : pool.slice(0, LIMIT);
+  const hidden = pool.length - shown.length;
 
-  const useDouble = doubles.length && Math.random() < 0.25;
-  const total = options.length;
-
-  let body;
-  if(useDouble){
-    const d = doubles[Math.floor(Math.random()*doubles.length)];
-    body = `<div class="newbadge">Double helper!</div>
-      <div style="font-size:26px;font-weight:700;margin:8px 0">${d.name}</div>
-      <p class="muted">${d.name} carries <b>${CH[x].nutrient}</b> and <b>${CH[y].nutrient}</b> all by itself —
-      one food, a whole buddy team.</p>`;
-  } else if(total){
-    const [fa, fb] = options[Math.floor(Math.random()*total)];
-    body = `<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0">
-        <div style="font-size:19px;font-weight:700">${fa.name}</div>
-        <div style="color:var(--muted);font-size:18px">+</div>
-        <div style="font-size:19px;font-weight:700">${fb.name}</div>
-      </div>
-      <p class="muted" style="font-size:14px">${fa.name} brings <b>${CH[x].nutrient}</b> ·
-        ${fb.name} brings <b>${CH[y].nutrient}</b></p>`;
-  } else {
-    body = `<p class="muted">No tasty combos found for this team yet.</p>`;
-  }
-
-  $('#combo-card').innerHTML = `
-    <div class="result">
-      <div class="facepair">${avatar(CH[x], 62)}${avatar(CH[y], 62)}</div>
-      ${body}
-      <div style="height:12px"></div>
-      <button class="btn" onclick="shuffleCombo()">Another idea</button>
-      <div class="expander" style="font-size:13px"><b>For grown-ups:</b> ${total.toLocaleString()} flavour-friendly
-      combinations exist for this team. These are ideas, not tested recipes — you choose what tastes good.</div>
+  el.innerHTML = `
+    <div class="mm-label">I HAVE A…</div>
+    <div class="mm-side">
+      <button class="${anchorSide===0?'on':''}" onclick="setSide(0)">${CH[x].nutrient} food</button>
+      <button class="${anchorSide===1?'on':''}" onclick="setSide(1)">${CH[y].nutrient} food</button>
+    </div>
+    <input class="search" style="margin:8px 0" placeholder="Search ${CH[from].nutrient} foods…"
+      value="${anchorQuery.replace(/"/g,'&quot;')}" oninput="anchorQuery=this.value;showAllFoods=false;renderAnchor();">
+    <div class="mm-chips">
+      ${shown.map(f => `<button class="mm-chip ${comboFood===f.name?'on':''}" onclick="pickFood('${f.name.replace(/'/g,"\\'")}')">${f.name}</button>`).join('')}
+      ${hidden > 0 ? `<button class="mm-chip ghost" onclick="showAllFoods=true;renderAnchor()">+ ${hidden} more</button>` : ''}
+      ${pool.length === 0 ? `<span class="muted" style="font-size:13px">No matches — try another word.</span>` : ''}
     </div>`;
+  // keep the cursor in the search box while typing
+  const inp = el.querySelector('input'); if(q && inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+}
+function setSide(s){ anchorSide = s; comboFood = null; anchorQuery = ""; showAllFoods = false; renderAnchor(); renderPartners(); }
+function pickFood(name){ comboFood = (comboFood === name) ? null : name; renderAnchor(); renderPartners(); }
+
+/* ---- step 3: partners for the chosen food, grouped by family ---- */
+function renderPartners(){
+  const el = $('#combo-card');
+  if(!comboPair){ el.innerHTML = `<p class="muted center" style="margin-top:20px">Choose a buddy team above to start.</p>`; return; }
+  const [from, to] = sides();
+  if(!comboFood){
+    el.innerHTML = `<p class="muted center" style="margin-top:14px;font-size:14px">Pick a food you have, or tap <b>Surprise me</b>.</p>`;
+    return;
+  }
+  const fa = FOODS.find(f => f.name === comboFood);
+  const partners = foodsWith(to).filter(fb => fb.name !== fa.name && flavorOK(fa, fb));
+
+  // group by category, alphabetically
+  const groups = {};
+  partners.forEach(fb => (groups[fb.cat] = groups[fb.cat] || []).push(fb));
+  const cats = Object.keys(groups).sort();
+  cats.forEach(c => groups[c].sort((a,b) => a.name.localeCompare(b.name)));
+
+  // does the anchor food carry BOTH nutrients by itself?
+  const selfDouble = fa.has.includes(to);
+  const doubles = FOODS.filter(f => f.has.includes(from) && f.has.includes(to) && f.name !== fa.name);
+
+  const rows = cats.map(c => `
+    <div class="mm-label">${c.toUpperCase()}</div>
+    ${groups[c].map(fb => {
+      const rec = recipeFor(comboPair, fa.name, fb.name);
+      const on = isSaved(comboPair, fa.name, fb.name);
+      return `<div class="mm-row">
+        <div style="flex:1"><div class="n">${fb.name}</div>${rec ? `<div class="r">In the Recipe Box: ${rec.name}</div>` : ''}</div>
+        <div class="dot" style="background:${CH[to].bg};color:${CH[to].ink}">${CH[to].sym}</div>
+        <button class="mm-heart ${on?'on':''}" aria-label="Save" onclick="toggleSave('${comboPair}','${fa.name.replace(/'/g,"\\'")}','${fb.name.replace(/'/g,"\\'")}')">${on?'♥':'♡'}</button>
+      </div>`;
+    }).join('')}`).join('');
+
+  el.innerHTML = `
+    <div class="result" style="text-align:left;padding:16px 14px;margin-top:12px">
+      <div class="facepair" style="justify-content:flex-start;gap:6px;margin-bottom:8px">${avatar(CH[from],44)}${avatar(CH[to],44)}</div>
+      <p style="font-size:14px;margin:0 0 6px"><b>${fa.name}</b> brings <b style="color:${CH[from].ink}">${CH[from].nutrient}</b>.
+        Add one of these for <b style="color:${CH[to].ink}">${CH[to].nutrient}</b>:</p>
+      ${selfDouble ? `<div class="mm-double"><b>Double helper!</b> ${fa.name} already carries ${CH[to].nutrient} too — it's a whole buddy team on its own.</div>` : ''}
+      ${!selfDouble && doubles.length ? `<div class="mm-double"><b>Double helpers:</b> ${doubles.map(d=>d.name).join(', ')} carry both nutrients by themselves.</div>` : ''}
+      ${rows || `<p class="muted">No flavour-friendly partners for this one — try another food.</p>`}
+      <div class="mm-foot">Showing ${partners.length} partner${partners.length===1?'':'s'} that go with ${fa.name}. These are ideas, not tested recipes — you choose what tastes good.</div>
+    </div>`;
+}
+
+/* ---- saved ideas list ---- */
+function renderSaved(){
+  const el = $('#combo-saved');
+  if(!savedIdeas.length){ el.innerHTML = ""; return; }
+  el.innerHTML = `
+    <div class="mm-saved-head"><h2 style="margin:0">My ideas <span class="muted" style="font-weight:500">(${savedIdeas.length})</span></h2></div>
+    <p class="muted" style="font-size:12px;margin:2px 0 8px">Saved on this device only.</p>
+    ${savedIdeas.map((i, idx) => {
+      const [x,y] = i.pair.split('_');
+      const rec = recipeFor(i.pair, i.a, i.b);
+      return `<div class="mm-row">
+        <div style="flex:1"><div class="n">${i.a} + ${i.b}</div>
+          <div style="font-size:11px;color:var(--muted)">${CH[x].name} + ${CH[y].name}${rec ? ` · <span class="r">${rec.name}</span>` : ''}</div></div>
+        <button class="mm-x" aria-label="Remove" onclick="removeIdea(${idx})">×</button>
+      </div>`;
+    }).join('')}`;
 }
 
 /* =========================================================================
@@ -1257,21 +1404,28 @@ function renderOnboard(){
 }
 $('#ob-next').addEventListener('click', () => {
   if(obStep < OB.length-1){ obStep++; renderOnboard(); }
-  else $('#onboard').style.display = 'none';   // finish tutorial → show the app
+  else { $('#onboard').style.display = 'none';   // finish tutorial → show the app
+         try{ if(!testMode) localStorage.setItem(STORE.onboarded, "1"); }catch(e){} }
 });
 
 /* =========================================================================
    11) START THE APP
    ========================================================================= */
+/* TEST SHORTCUT — add ?test=celebrate to the URL to preview the celebration
+   without finding all 10 pairs. Test mode never saves anything to the device. */
+const TEST = new URLSearchParams(location.search).get("test");
+if (TEST) testMode = true;
+
+if (!testMode) loadState();          // restore progress + saved ideas from this device
 renderGrid();
 renderRecipeList();
 updateProgress();
 renderOnboard();
+try{ if(!testMode && localStorage.getItem(STORE.onboarded) === "1") $('#onboard').style.display = 'none'; }catch(e){}
 
-/* TEST SHORTCUT — add ?test=celebrate to the URL to preview the celebration
-   without finding all 10 pairs. Handy for demos and for checking a deploy. */
-if (new URLSearchParams(location.search).get("test") === "celebrate") {
+if (TEST === "celebrate") {
   document.getElementById("onboard").style.display = "none";
+  window._celebrationShown = false;
   BUDDY_KEYS.forEach(k => discovered.add(k));
   updateProgress();
 }
