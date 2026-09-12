@@ -246,6 +246,33 @@
   .mm-foot{font-size:11px;color:var(--muted);margin:6px 0 4px;}
   .mm-saved-head{display:flex;justify-content:space-between;align-items:center;margin-top:18px;}
   .mm-x{background:none;color:var(--muted);font-size:16px;padding:0 4px;}
+
+  /* ---------- Mix & Match v5: basket + builder ---------- */
+  .mm-basket{background:var(--card);border:1.5px solid var(--ink);border-radius:var(--radius);
+    padding:12px 14px;margin-top:14px;}
+  .mm-bchips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px;}
+  .mm-bchip{display:inline-flex;align-items:center;gap:6px;background:var(--fine-bg);border-radius:999px;
+    padding:5px 8px 5px 11px;font-size:12px;font-weight:600;}
+  .mm-bchip button{background:none;padding:0;font-size:14px;line-height:1;color:var(--muted);}
+  .mm-cov{font-size:12px;line-height:1.7;margin-bottom:8px;}
+  .mm-cov .ok{color:var(--buddy);font-weight:600;}
+  .mm-cov .add{color:var(--muted);}
+  .mm-cov .add b{color:var(--ink);text-decoration:underline;cursor:pointer;}
+  .mm-btnrow{display:flex;gap:8px;}
+  .mm-btnrow .btn{flex:1;padding:12px 10px;font-size:14px;}
+  .mm-btnrow .btn.light{flex:0 0 auto;}
+  .mm-built{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;}
+  .mm-built .t{font-size:17px;font-weight:700;}
+  .mm-built .k{font-size:11px;color:var(--muted);margin:2px 0 8px;}
+  .mm-built .why{font-size:13px;line-height:1.55;margin-bottom:8px;}
+  .mm-built ol{margin:0 0 8px;padding-left:20px;font-size:13px;line-height:1.7;}
+  .mm-built .ing{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.5;}
+  .mm-built .note{font-size:11px;color:#8b8a83;line-height:1.5;margin-top:6px;}
+  .mm-box{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;}
+  .mm-box .n{font-size:14px;font-weight:600;}
+  .mm-box .u{font-size:11px;color:var(--buddy);font-weight:600;}
+  details.mm-steps summary{font-size:12px;color:var(--muted);cursor:pointer;margin-top:4px;}
+  details.mm-steps ol{margin:4px 0 0;padding-left:18px;font-size:12px;line-height:1.6;}
 </style>
 </head>
 
@@ -261,7 +288,7 @@
 
   <!-- ============ SCREEN: VILLAGE ============ -->
   <section class="screen active" id="s-village">
-    <h1>Vitamin Village <span style="font-size:11px;font-weight:600;color:var(--muted);vertical-align:middle;margin-left:6px">v4</span></h1>
+    <h1>Vitamin Village <span style="font-size:11px;font-weight:600;color:var(--muted);vertical-align:middle;margin-left:6px">v6</span></h1>
     <div class="progress">
       <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;">
         <span>Buddies discovered</span><span id="prog-count">0 / 10</span>
@@ -310,10 +337,13 @@
   <!-- ============ SCREEN: COMBO MAKER ============ -->
   <section class="screen" id="s-combo">
     <h1>Mix &amp; Match</h1>
-    <p class="muted" style="margin-top:-4px">Pick a buddy team, then a food you have.</p>
+    <p class="muted" style="margin-top:-4px">Pick a buddy team, then the foods you have.</p>
     <div id="combo-pairs" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px"></div>
+    <div id="combo-quick"></div>
     <div id="combo-anchor"></div>
-    <div id="combo-card"></div>
+    <div id="combo-partners"></div>
+    <div id="combo-basket"></div>
+    <div id="combo-result"></div>
     <div id="combo-saved"></div>
   </section>
 
@@ -1052,153 +1082,408 @@ function checkRow(text){
 }
 
 /* =========================================================================
-   9b) MIX & MATCH — explore buddy-friendly food combos from the FOODS data
+   9b) MIX & MATCH v5 — pick many foods, see what they cover, get a recipe
    =========================================================================
-   Three steps: pick a buddy team → pick a food you have → see every
-   flavour-friendly partner that brings the OTHER nutrient, grouped by food
-   family. Heart a combo to save it on this device. It never invents recipes;
-   a grown-up still decides what tastes good.
+   Flow: buddy team → pick foods you have (many, from either side) → the
+   BASKET shows which buddy teams those foods cover → "Recommend a recipe"
+   first finds real Recipe Box recipes that use your foods, then BUILDS an
+   idea from a recipe SHAPE (porridge, salad, wrap…) using only your foods.
+   Everything runs on the phone. Built recipes are starting points, and say so.
 */
-let comboPair = null;     // e.g. "c_iron"
-let anchorSide = 0;       // 0 = start from the first nutrient's foods, 1 = the second's
-let comboFood = null;     // the food the user anchored on (name)
-let anchorQuery = "";     // search text in the food picker
-let showAllFoods = false;
+let comboPair = null, anchorSide = 0, anchorQuery = "", showAllFoods = false;
+const anchorSel = new Set(), partnerSel = new Set(), extraSel = new Set();
+let recOpen = false, builtIdx = 0, fits = [];
 
 function foodsWith(nid){ return FOODS.filter(f => f.has.includes(nid)); }
+const byName = n => FOODS.find(f => f.name === n);
 const stem = s => s.toLowerCase().replace(/s$/, "");
 function hasFood(text, name){ return text.toLowerCase().includes(stem(name)); }
+function singular(n){
+  if(/^(asparagus|couscous|watercress|hummus)$/i.test(n)) return n;
+  if(/ies$/.test(n)) return n.slice(0,-3)+"y";
+  if(/[^s]s$/.test(n)) return n.slice(0,-1);
+  return n;
+}
+const esc = s => s.replace(/'/g, "\\'");
+const verb = (name, sing, plur) => (/s$/i.test(name) && !/^(asparagus|couscous|watercress|hummus)$/i.test(name)) ? plur : sing;
 
-/* A hand-written recipe that already uses both foods for this team, if any */
-function recipeFor(pairKey, a, b){
-  return RECIPES.find(r => ruleKey(r.pair[0], r.pair[1]) === pairKey &&
-    hasFood(r.ingredients.join(" ") + " " + r.shopping.join(" "), a) &&
-    hasFood(r.ingredients.join(" ") + " " + r.shopping.join(" "), b));
+/* ---------------- basket ---------------- */
+function basketFoods(){
+  const names = [...anchorSel, ...partnerSel, ...extraSel];
+  return [...new Set(names)].map(byName).filter(Boolean);
+}
+function coverage(basket){
+  const has = nid => basket.some(f => f.has.includes(nid));
+  const covered = BUDDY_KEYS.filter(k => { const [x,y] = k.split('_'); return has(x) && has(y); });
+  const suggestions = [];
+  BUDDY_KEYS.forEach(k => {
+    if(covered.includes(k)) return;
+    const [x,y] = k.split('_');
+    const have = has(x) ? x : (has(y) ? y : null); if(!have) return;
+    const need = have === x ? y : x;
+    const cand = foodsWith(need).filter(f => !basket.some(b => b.name === f.name) && basket.every(b => flavorOK(b, f)));
+    if(cand.length) suggestions.push({key:k, need, food: cand.find(f => FLAVOR[f.cat] === "neutral") || cand[0]});
+  });
+  return {covered, suggestions: suggestions.slice(0,2)};
+}
+function addExtra(name){ extraSel.add(name); refresh(); }
+function removeFromBasket(name){ anchorSel.delete(name); partnerSel.delete(name); extraSel.delete(name); recOpen = false; refresh(); }
+function clearBasket(){ anchorSel.clear(); partnerSel.clear(); extraSel.clear(); recOpen = false; refresh(); }
+
+/* ---------------- QUICK IDEAS (the v3 card, back on top) ----------------
+   Tap a team → see its Recipe Box recipes and one random flavour-friendly
+   food pair (sometimes a "double helper"). "Another idea" re-rolls;
+   "Add to basket" hands the idea to the builder below.                   */
+let quick = null, showQuick = true;
+function quickPick(){
+  if(!comboPair){ quick = null; return; }
+  const [x,y] = comboPair.split('_');
+  const A = foodsWith(x), B = foodsWith(y), options = [];
+  A.forEach(fa => B.forEach(fb => { if(fa.name !== fb.name && flavorOK(fa, fb)) options.push([fa, fb]); }));
+  const doubles = FOODS.filter(f => f.has.includes(x) && f.has.includes(y));
+  if(doubles.length && Math.random() < .25) quick = {double: doubles[Math.floor(Math.random()*doubles.length)], total: options.length};
+  else if(options.length){ const [fa,fb] = options[Math.floor(Math.random()*options.length)]; quick = {a:fa, b:fb, total: options.length}; }
+  else quick = null;
+}
+function quickToBasket(){
+  if(!quick) return;
+  const [x] = comboPair.split('_'); const [from] = sides();
+  if(quick.double){ extraSel.add(quick.double.name); }
+  else {
+    const [anchorFood, partnerFood] = (from === x) ? [quick.a, quick.b] : [quick.b, quick.a];
+    anchorSel.add(anchorFood.name);
+    const ok = new Set(partnerPool().map(f => f.name));
+    if(ok.has(partnerFood.name)) partnerSel.add(partnerFood.name); else extraSel.add(partnerFood.name);
+  }
+  showQuick = false; recOpen = false; refresh();
+}
+function renderQuick(){
+  const el = $('#combo-quick');
+  if(!comboPair){ el.innerHTML = ""; return; }
+  const [x,y] = comboPair.split('_');
+  const recs = RECIPES.filter(r => ruleKey(r.pair[0], r.pair[1]) === comboPair);
+  const building = basketFoods().length > 0;
+  if(building && !showQuick){
+    el.innerHTML = `<button class="mm-chip ghost" style="margin-top:8px" onclick="showQuick=true;renderQuick()">Show quick ideas for ${CH[x].name} + ${CH[y].name}</button>`;
+    return;
+  }
+  let idea = "";
+  if(quick && quick.double){
+    const d = quick.double;
+    idea = `<div class="newbadge">Double helper!</div>
+      <div style="font-size:24px;font-weight:700;margin:6px 0">${d.name}</div>
+      <p class="muted" style="font-size:14px;margin:0">${d.name} ${verb(d.name,'carries','carry')} <b>${CH[x].nutrient}</b> and <b>${CH[y].nutrient}</b> all by itself — one food, a whole buddy team.</p>`;
+  } else if(quick){
+    idea = `<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0">
+        <div style="font-size:19px;font-weight:700">${quick.a.name}</div><div class="muted" style="font-size:18px">+</div>
+        <div style="font-size:19px;font-weight:700">${quick.b.name}</div></div>
+      <p class="muted" style="font-size:14px;margin:0">${quick.a.name} ${verb(quick.a.name,'brings','bring')} <b>${CH[x].nutrient}</b> · ${quick.b.name} ${verb(quick.b.name,'brings','bring')} <b>${CH[y].nutrient}</b></p>`;
+  } else idea = `<p class="muted">No quick ideas for this team yet.</p>`;
+  el.innerHTML = `
+    ${recs.length ? `<div class="mm-label">RECIPES FOR ${CH[x].name.toUpperCase()} + ${CH[y].name.toUpperCase()}</div>` +
+      recs.map(r => `<div class="mm-box" onclick="openRecipe('${r.id}')" style="cursor:pointer">
+        <div class="n">${r.name}</div><div class="u">${r.meal} · ${r.prep} min · tested recipe · tap to open</div></div>`).join('') : ''}
+    <div class="mm-label">QUICK IDEA</div>
+    <div class="result" style="padding:16px 14px">
+      <div class="facepair" style="margin-bottom:6px">${avatar(CH[x],56)}${avatar(CH[y],56)}</div>
+      ${idea}
+      <div class="mm-btnrow" style="margin-top:12px">
+        <button class="btn" onclick="quickPick();renderQuick()">Another idea</button>
+        ${quick ? `<button class="btn light" style="flex:1" onclick="quickToBasket()">Add to basket</button>` : ''}
+      </div>
+      <div class="mm-foot" style="text-align:center">${quick ? quick.total.toLocaleString() : 0} flavour-friendly combos for this team.</div>
+    </div>
+    ${building ? `<button class="mm-chip ghost" style="margin-top:8px" onclick="showQuick=false;renderQuick()">Hide quick ideas</button>` : ''}
+    <div class="mm-label" style="margin-top:16px">OR BUILD YOUR OWN</div>`;
 }
 
-/* ---- saved ideas ---- */
-function ideaKey(pair, a, b){ return pair + "|" + [a,b].sort().join("|"); }
-function isSaved(pair, a, b){ const k = ideaKey(pair,a,b); return savedIdeas.some(i => ideaKey(i.pair,i.a,i.b) === k); }
-function toggleSave(pair, a, b){
-  const k = ideaKey(pair,a,b);
-  const i = savedIdeas.findIndex(x => ideaKey(x.pair,x.a,x.b) === k);
-  if(i > -1) savedIdeas.splice(i,1); else savedIdeas.push({pair, a, b});
-  saveState(); renderPartners(); renderSaved();
-}
-function removeIdea(i){ savedIdeas.splice(i,1); saveState(); renderPartners(); renderSaved(); }
-
-/* ---- step 1: buddy team chips ---- */
+/* ---------------- team chips ---------------- */
 function renderComboPairs(){
   $('#combo-pairs').innerHTML = BUDDY_KEYS.map(key => {
     const [x,y] = key.split('_');
     return `<button class="mm-chip ${comboPair===key?'on':''}" onclick="pickCombo('${key}')">${CH[x].name} + ${CH[y].name}</button>`;
   }).join('') + `<button class="mm-chip ghost" onclick="surprise()">Surprise me</button>`;
-  renderAnchor(); renderPartners(); renderSaved();
+  refresh();
 }
+function refresh(){ renderQuick(); renderAnchor(); renderPartners(); renderBasket(); renderResult(); renderSaved(); }
 function pickCombo(key){
-  if(comboPair !== key){ comboFood = null; anchorQuery = ""; showAllFoods = false; anchorSide = 0; }
-  comboPair = key; renderComboPairs();
+  if(comboPair !== key){ anchorSel.clear(); partnerSel.clear(); extraSel.clear(); anchorQuery = ""; showAllFoods = false; anchorSide = 0; recOpen = false; showQuick = true; }
+  comboPair = key; quickPick(); renderComboPairs();
+}
+function sides(){ const [x,y] = comboPair.split('_'); return anchorSide === 0 ? [x,y] : [y,x]; }
+function anchorFoods(){
+  const [from, to] = sides(); const targets = foodsWith(to);
+  return foodsWith(from).filter(fa => targets.some(fb => fb.name !== fa.name && flavorOK(fa, fb)));
 }
 function surprise(){
   comboPair = BUDDY_KEYS[Math.floor(Math.random()*BUDDY_KEYS.length)];
   anchorSide = Math.random() < .5 ? 0 : 1;
+  anchorSel.clear(); partnerSel.clear(); extraSel.clear(); anchorQuery = ""; showAllFoods = false; recOpen = false;
   const pool = anchorFoods();
-  comboFood = pool.length ? pool[Math.floor(Math.random()*pool.length)].name : null;
-  anchorQuery = ""; showAllFoods = false;
-  renderComboPairs();
+  if(pool.length){
+    const a = pool[Math.floor(Math.random()*pool.length)]; anchorSel.add(a.name);
+    const ps = partnerPool(); if(ps.length) partnerSel.add(ps[Math.floor(Math.random()*ps.length)].name);
+  }
+  quickPick(); showQuick = true; renderComboPairs();
 }
 
-/* which nutrient we start from, and which we're looking for */
-function sides(){
-  const [x,y] = comboPair.split('_');
-  return anchorSide === 0 ? [x,y] : [y,x];
-}
-/* foods on the anchor side that have at least one flavour-friendly partner */
-function anchorFoods(){
-  const [from, to] = sides();
-  const targets = foodsWith(to);
-  return foodsWith(from).filter(fa => targets.some(fb => fb.name !== fa.name && flavorOK(fa, fb)));
-}
-
-/* ---- step 2: pick a food you have ---- */
+/* ---------------- step 1: foods you have (multi) ---------------- */
 function renderAnchor(){
   const el = $('#combo-anchor');
   if(!comboPair){ el.innerHTML = ""; return; }
-  const [from, to] = sides();
-  const [x,y] = comboPair.split('_');
+  const [from] = sides(); const [x,y] = comboPair.split('_');
   let pool = anchorFoods();
   const q = anchorQuery.trim().toLowerCase();
   if(q) pool = pool.filter(f => f.name.toLowerCase().includes(q) || f.cat.toLowerCase().includes(q));
   const LIMIT = 8;
-  const shown = (showAllFoods || q) ? pool : pool.slice(0, LIMIT);
+  // always keep selected ones visible
+  const shown = (showAllFoods || q) ? pool : [...pool.filter(f => anchorSel.has(f.name)), ...pool.filter(f => !anchorSel.has(f.name))].slice(0, Math.max(LIMIT, anchorSel.size));
   const hidden = pool.length - shown.length;
-
   el.innerHTML = `
-    <div class="mm-label">I HAVE A…</div>
+    <div class="mm-label">I HAVE… (tap as many as you like)</div>
     <div class="mm-side">
-      <button class="${anchorSide===0?'on':''}" onclick="setSide(0)">${CH[x].nutrient} food</button>
-      <button class="${anchorSide===1?'on':''}" onclick="setSide(1)">${CH[y].nutrient} food</button>
+      <button class="${anchorSide===0?'on':''}" onclick="setSide(0)">${CH[x].nutrient} foods</button>
+      <button class="${anchorSide===1?'on':''}" onclick="setSide(1)">${CH[y].nutrient} foods</button>
     </div>
     <input class="search" style="margin:8px 0" placeholder="Search ${CH[from].nutrient} foods…"
       value="${anchorQuery.replace(/"/g,'&quot;')}" oninput="anchorQuery=this.value;showAllFoods=false;renderAnchor();">
     <div class="mm-chips">
-      ${shown.map(f => `<button class="mm-chip ${comboFood===f.name?'on':''}" onclick="pickFood('${f.name.replace(/'/g,"\\'")}')">${f.name}</button>`).join('')}
+      ${shown.map(f => `<button class="mm-chip ${anchorSel.has(f.name)?'on':''}" onclick="toggleAnchor('${esc(f.name)}')">${anchorSel.has(f.name)?'✓ ':''}${f.name}</button>`).join('')}
       ${hidden > 0 ? `<button class="mm-chip ghost" onclick="showAllFoods=true;renderAnchor()">+ ${hidden} more</button>` : ''}
       ${pool.length === 0 ? `<span class="muted" style="font-size:13px">No matches — try another word.</span>` : ''}
     </div>`;
-  // keep the cursor in the search box while typing
   const inp = el.querySelector('input'); if(q && inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
 }
-function setSide(s){ anchorSide = s; comboFood = null; anchorQuery = ""; showAllFoods = false; renderAnchor(); renderPartners(); }
-function pickFood(name){ comboFood = (comboFood === name) ? null : name; renderAnchor(); renderPartners(); }
+function setSide(s){ anchorSide = s; anchorSel.clear(); partnerSel.clear(); anchorQuery = ""; showAllFoods = false; recOpen = false; refresh(); }
+function toggleAnchor(name){
+  if(anchorSel.has(name)) anchorSel.delete(name); else anchorSel.add(name);
+  // drop partners that no longer fit every selected anchor
+  const ok = new Set(partnerPool().map(f => f.name));
+  [...partnerSel].forEach(n => { if(!ok.has(n)) partnerSel.delete(n); });
+  recOpen = false; refresh();
+}
 
-/* ---- step 3: partners for the chosen food, grouped by family ---- */
+/* ---------------- step 2: partners that go with ALL chosen foods (multi) -------- */
+function partnerPool(){
+  if(!comboPair) return [];
+  const [, to] = sides();
+  const anchors = [...anchorSel].map(byName).filter(Boolean);
+  if(!anchors.length) return [];
+  return foodsWith(to).filter(fb => !anchorSel.has(fb.name) && anchors.every(fa => flavorOK(fa, fb)));
+}
 function renderPartners(){
-  const el = $('#combo-card');
-  if(!comboPair){ el.innerHTML = `<p class="muted center" style="margin-top:20px">Choose a buddy team above to start.</p>`; return; }
+  const el = $('#combo-partners');
+  if(!comboPair || !anchorSel.size){ el.innerHTML = ""; return; }
   const [from, to] = sides();
-  if(!comboFood){
-    el.innerHTML = `<p class="muted center" style="margin-top:14px;font-size:14px">Pick a food you have, or tap <b>Surprise me</b>.</p>`;
-    return;
-  }
-  const fa = FOODS.find(f => f.name === comboFood);
-  const partners = foodsWith(to).filter(fb => fb.name !== fa.name && flavorOK(fa, fb));
-
-  // group by category, alphabetically
-  const groups = {};
-  partners.forEach(fb => (groups[fb.cat] = groups[fb.cat] || []).push(fb));
-  const cats = Object.keys(groups).sort();
-  cats.forEach(c => groups[c].sort((a,b) => a.name.localeCompare(b.name)));
-
-  // does the anchor food carry BOTH nutrients by itself?
-  const selfDouble = fa.has.includes(to);
-  const doubles = FOODS.filter(f => f.has.includes(from) && f.has.includes(to) && f.name !== fa.name);
-
-  const rows = cats.map(c => `
-    <div class="mm-label">${c.toUpperCase()}</div>
-    ${groups[c].map(fb => {
-      const rec = recipeFor(comboPair, fa.name, fb.name);
-      const on = isSaved(comboPair, fa.name, fb.name);
-      return `<div class="mm-row">
-        <div style="flex:1"><div class="n">${fb.name}</div>${rec ? `<div class="r">In the Recipe Box: ${rec.name}</div>` : ''}</div>
-        <div class="dot" style="background:${CH[to].bg};color:${CH[to].ink}">${CH[to].sym}</div>
-        <button class="mm-heart ${on?'on':''}" aria-label="Save" onclick="toggleSave('${comboPair}','${fa.name.replace(/'/g,"\\'")}','${fb.name.replace(/'/g,"\\'")}')">${on?'♥':'♡'}</button>
-      </div>`;
-    }).join('')}`).join('');
-
+  const pool = partnerPool();
+  const groups = {}; pool.forEach(f => (groups[f.cat] = groups[f.cat] || []).push(f));
+  const cats = Object.keys(groups).sort(); cats.forEach(c => groups[c].sort((a,b)=>a.name.localeCompare(b.name)));
   el.innerHTML = `
-    <div class="result" style="text-align:left;padding:16px 14px;margin-top:12px">
-      <div class="facepair" style="justify-content:flex-start;gap:6px;margin-bottom:8px">${avatar(CH[from],44)}${avatar(CH[to],44)}</div>
-      <p style="font-size:14px;margin:0 0 6px"><b>${fa.name}</b> brings <b style="color:${CH[from].ink}">${CH[from].nutrient}</b>.
-        Add one of these for <b style="color:${CH[to].ink}">${CH[to].nutrient}</b>:</p>
-      ${selfDouble ? `<div class="mm-double"><b>Double helper!</b> ${fa.name} already carries ${CH[to].nutrient} too — it's a whole buddy team on its own.</div>` : ''}
-      ${!selfDouble && doubles.length ? `<div class="mm-double"><b>Double helpers:</b> ${doubles.map(d=>d.name).join(', ')} carry both nutrients by themselves.</div>` : ''}
-      ${rows || `<p class="muted">No flavour-friendly partners for this one — try another food.</p>`}
-      <div class="mm-foot">Showing ${partners.length} partner${partners.length===1?'':'s'} that go with ${fa.name}. These are ideas, not tested recipes — you choose what tastes good.</div>
+    <div class="mm-label">${CH[to].nutrient.toUpperCase()} FOODS THAT GO WITH THOSE (tap to add)</div>
+    ${pool.length ? cats.map(c => `
+      <div class="mm-label" style="font-weight:500;margin-top:8px">${c}</div>
+      <div class="mm-chips">${groups[c].map(f =>
+        `<button class="mm-chip ${partnerSel.has(f.name)?'on':''}" onclick="togglePartner('${esc(f.name)}')">${partnerSel.has(f.name)?'✓ ':''}${f.name}</button>`).join('')}</div>`).join('')
+    : `<p class="muted" style="font-size:13px">Nothing goes with <i>all</i> of those together — try fewer foods, or a mix that's all sweet or all savoury.</p>`}`;
+}
+function togglePartner(name){ if(partnerSel.has(name)) partnerSel.delete(name); else partnerSel.add(name); recOpen = false; refresh(); }
+
+/* ---------------- basket card ---------------- */
+function renderBasket(){
+  const el = $('#combo-basket');
+  const basket = basketFoods();
+  if(!comboPair || !basket.length){ el.innerHTML = comboPair ? "" : `<p class="muted center" style="margin-top:20px">Choose a buddy team above to start.</p>`; return; }
+  const {covered, suggestions} = coverage(basket);
+  el.innerHTML = `
+    <div class="mm-basket">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:14px;font-weight:700">Your basket <span class="muted" style="font-weight:500">(${basket.length})</span></div>
+        <button class="mm-x" onclick="clearBasket()" style="font-size:12px;font-weight:600">Clear</button>
+      </div>
+      <div class="mm-bchips">${basket.map(f => `<span class="mm-bchip">${f.name}<button aria-label="Remove" onclick="removeFromBasket('${esc(f.name)}')">×</button></span>`).join('')}</div>
+      <div class="mm-cov">
+        ${covered.map(k => { const [x,y]=k.split('_'); return `<div class="ok">✓ ${CH[x].name} + ${CH[y].name}</div>`; }).join('')}
+        ${suggestions.map(s => { const [x,y]=s.key.split('_'); return `<div class="add">${CH[x].name} + ${CH[y].name} — add <b onclick="addExtra('${esc(s.food.name)}')">${s.food.name.toLowerCase()}</b></div>`; }).join('')}
+        ${!covered.length && !suggestions.length ? `<div class="add">Add a food with a different nutrient to make a buddy team.</div>` : ''}
+      </div>
+      <div class="mm-btnrow">
+        <button class="btn" onclick="recommend()">Recommend a recipe</button>
+      </div>
     </div>`;
 }
 
-/* ---- saved ideas list ---- */
+/* ---------------- Recipe Box matches ---------------- */
+function boxMatches(basket){
+  return RECIPES.map(r => {
+    const text = r.ingredients.join(' ') + ' ' + r.shopping.join(' ');
+    return {r, used: basket.filter(f => hasFood(text, f.name))};
+  }).filter(m => m.used.length >= Math.min(2, basket.length))
+    .sort((a,b) => b.used.length - a.used.length).slice(0,3);
+}
+
+/* ---------------- recipe SHAPES (templates) ----------------------------------
+   Each shape has slots. A slot takes basket foods of certain families (cats),
+   optionally filtered by name (match), between min and max of them. A slot
+   with `staple` is filled from the pantry if the basket has nothing for it.
+   Steps use {slotId}; a step is dropped if every slot it mentions is empty.
+   `head` slots name the recipe. Edit or add shapes here — it's just data.  */
+const SHAPES = [
+ {kind:"Porridge", flavor:"sweet", staples:["a splash of milk"], slots:[
+   {id:"grain", cats:["Grain"], match:/oat|muesli|granola|quinoa/i, min:1, max:1},
+   {id:"fruit", cats:["Fruit","Berry","Dried fruit","Citrus"], min:1, max:3, head:true},
+   {id:"crunch", cats:["Seed","Nut"], min:0, max:2}],
+  steps:["Ask a grown-up to warm the {grain} in milk until thick and creamy.","Slice or scatter the {fruit}.","Spoon into bowls and pile the fruit on top.","Sprinkle over the {crunch}."]},
+ {kind:"Smoothie", flavor:"sweet", staples:[], slots:[
+   {id:"fruit", cats:["Fruit","Berry","Citrus"], min:1, max:3, head:true},
+   {id:"creamy", cats:["Dairy","Drink"], match:/yogurt|milk/i, min:0, max:1, staple:"a cup of plain yogurt"},
+   {id:"greens", cats:["Leafy green"], match:/spinach|kale/i, min:0, max:1},
+   {id:"seeds", cats:["Seed","Nut"], min:0, max:1}],
+  steps:["Peel or chop the {fruit}.","Add the fruit, {creamy}{greens: and a handful of {greens}} to a blender.","Add the {seeds}.","Put the lid on tight and ask a grown-up to blend until smooth.","Pour into cups and enjoy cold."]},
+ {kind:"Parfait", flavor:"sweet", staples:["a drizzle of honey"], slots:[
+   {id:"yogurt", cats:["Dairy"], match:/yogurt/i, min:0, max:1, staple:"a cup of plain yogurt"},
+   {id:"fruit", cats:["Fruit","Berry","Citrus","Dried fruit"], min:1, max:3, head:true},
+   {id:"crunch", cats:["Seed","Nut","Grain"], match:/seed|nut|almond|cashew|pecan|walnut|pistachio|granola|muesli/i, min:0, max:2}],
+  steps:["Spoon a layer of {yogurt} into a clear cup.","Add a layer of {fruit}.","Repeat the layers.","Top with the {crunch} and a drizzle of honey."]},
+ {kind:"Trail mix", flavor:"sweet", staples:[], slots:[
+   {id:"mix", cats:["Nut","Seed","Dried fruit","Treat"], min:2, max:5, head:true}],
+  steps:["Pour the {mix} into a big bowl.","Mix with a spoon.","Scoop into small bags or cups for snacking."]},
+ {kind:"Salad", flavor:"savory", staples:["a drizzle of olive oil"], slots:[
+   {id:"green", cats:["Leafy green"], min:1, max:2, head:true},
+   {id:"veg", cats:["Vegetable"], min:0, max:3, head:true},
+   {id:"protein", cats:["Legume","Fish","Meat","Protein","Dairy"], match:/^(?!.*milk|.*cream$|.*butter|.*ghee)/i, min:0, max:1},
+   {id:"crunch", cats:["Seed","Nut"], min:0, max:2},
+   {id:"citrus", cats:["Citrus"], min:0, max:1}],
+  steps:["Wash the {green} and pat dry.","Chop the {veg}.","Toss the greens and veg together in a bowl.","Add the {protein}.","Sprinkle over the {crunch}.","Drizzle with olive oil{citrus: and a squeeze of {citrus}} and toss."]},
+ {kind:"Wrap", flavor:"savory", staples:["tortilla wraps"], slots:[
+   {id:"filling", cats:["Legume","Meat","Fish","Protein"], min:1, max:1, head:true},
+   {id:"veg", cats:["Vegetable","Leafy green"], min:0, max:3, head:true},
+   {id:"cheese", cats:["Dairy"], match:/cheese|feta|ricotta|cottage/i, min:0, max:1}],
+  steps:["Ask a grown-up to warm the {filling} in a pan.","Slice the {veg} into strips.","Lay the wraps flat and add the filling and veg.","Sprinkle on the {cheese}.","Roll up tightly and cut in half."]},
+ {kind:"Bowl", flavor:"savory", staples:["a drizzle of olive oil"], slots:[
+   {id:"grain", cats:["Grain"], match:/rice|quinoa|couscous|bulgur|farro|barley/i, min:1, max:1},
+   {id:"veg", cats:["Vegetable","Leafy green"], min:1, max:3, head:true},
+   {id:"protein", cats:["Legume","Meat","Fish","Protein"], min:0, max:1, head:true},
+   {id:"crunch", cats:["Seed","Nut"], min:0, max:1}],
+  steps:["Ask a grown-up to cook the {grain} until soft.","Cook the {veg} in a little olive oil until tender.","Cook the {protein} until it's hot all the way through.","Scoop the grain into bowls and add everything on top.","Sprinkle over the {crunch}."]},
+ {kind:"Stew", flavor:"savory", staples:["a cup of vegetable stock"], slots:[
+   {id:"base", cats:["Legume","Meat"], min:1, max:1, head:true},
+   {id:"veg", cats:["Vegetable","Leafy green"], min:1, max:3, head:true}],
+  steps:["Chop the {veg} into small pieces.","Ask a grown-up to add the {base}, veg and stock to a pot.","Bring to a gentle boil, then simmer until everything is soft.","Stir well and let it cool a little before serving."]},
+ {kind:"Skillet", flavor:"savory", staples:["a little butter"], slots:[
+   {id:"main", cats:["Protein","Meat","Fish"], min:1, max:1, head:true},
+   {id:"veg", cats:["Vegetable","Leafy green"], min:1, max:3, head:true},
+   {id:"cheese", cats:["Dairy"], match:/cheese|feta/i, min:0, max:1}],
+  steps:["Chop the {veg}.","Ask a grown-up to melt a little butter in a pan and cook the veg until soft.","Add the {main} and cook until it's done all the way through.","Stir in the {cheese} until it melts.","Serve warm."]},
+ {kind:"Toast", flavor:"savory", staples:[], slots:[
+   {id:"bread", cats:["Grain"], match:/bread|bagel/i, min:1, max:1},
+   {id:"topping", cats:["Fish","Protein","Dairy","Vegetable"], match:/sardine|tuna|salmon|mackerel|egg|cheese|feta|ricotta|cottage|cream|avocado/i, min:1, max:2, head:true},
+   {id:"veg", cats:["Vegetable","Leafy green"], min:0, max:2}],
+  steps:["Toast the {bread} until golden.","Spread or lay the {topping} on top.","Add the {veg}.","Cut into pieces and enjoy."]},
+ {kind:"Dippers", flavor:"savory", staples:["a squeeze of lemon"], slots:[
+   {id:"veg", cats:["Vegetable"], match:/carrot|cucumber|pepper|celery|broccoli|radish|zucchini/i, min:1, max:3, head:true},
+   {id:"dip", cats:["Legume","Dairy"], match:/chickpea|yogurt/i, min:1, max:1}],
+  steps:["Wash and cut the {veg} into sticks.","Ask a grown-up to blend the {dip} with a squeeze of lemon until smooth.","Scoop the dip into a bowl.","Dip, crunch, repeat!"]},
+ {kind:"Pasta", flavor:"savory", staples:["a drizzle of olive oil"], slots:[
+   {id:"pasta", cats:["Grain"], match:/pasta|noodle/i, min:1, max:1},
+   {id:"veg", cats:["Vegetable","Leafy green"], min:0, max:3, head:true},
+   {id:"protein", cats:["Legume","Meat","Fish","Dairy"], match:/^(?!.*milk|.*yogurt|.*butter|.*ghee)/i, min:0, max:1, head:true}],
+  steps:["Ask a grown-up to boil the {pasta} until soft.","Cook the {veg} in a little olive oil until tender.","Add the {protein} and warm through.","Toss the pasta with everything and serve."]},
+];
+
+function buildShapes(basket){
+  const out = [];
+  SHAPES.forEach((sh, order) => {
+    const allowed = new Set(sh.slots.flatMap(s => s.cats));
+    const eligible = basket.filter(f => { const fl = FLAVOR[f.cat] || "neutral"; return fl === sh.flavor || fl === "neutral" || allowed.has(f.cat); });
+    const used = new Set(); const fill = {};
+    let ok = true;
+    sh.slots.forEach(s => {
+      const got = eligible.filter(f => !used.has(f.name) && s.cats.includes(f.cat) && (!s.match || s.match.test(f.name))).slice(0, s.max);
+      got.forEach(f => used.add(f.name)); fill[s.id] = got;
+      if(got.length < s.min && !(got.length === 0 && s.staple)) ok = false;
+    });
+    const usedCount = used.size;
+    if(!ok || usedCount < Math.min(2, basket.length)) return;
+    // name
+    const heads = sh.slots.filter(s => s.head).flatMap(s => fill[s.id]).slice(0,2).map(f => singular(f.name));
+    const name = (heads.length ? heads.join(" & ") + " " : "") + sh.kind;
+    // steps
+    const steps = sh.steps.map(st => {
+      const refs = [...st.matchAll(/\{(\w+)(?::([^}]*))?\}/g)];
+      if(refs.length && refs.every(m => !fill[m[1]].length && !sh.slots.find(s=>s.id===m[1]).staple)) return null;
+      return st.replace(/\{(\w+)(?::([^}]*))?\}/g, (_, id, extra) => {
+        const slot = sh.slots.find(s => s.id === id);
+        if(fill[id].length){ const names = fill[id].map(f => f.name.toLowerCase()).join(" and "); return extra ? extra.replace("{"+id+"}", names) : names; }
+        if(slot.staple) return extra ? "" : slot.staple;
+        return "";
+      }).replace(/\s+,/g, ",").replace(/\s{2,}/g, " ").replace(/ \./g, ".");
+    }).filter(Boolean);
+    const ingredients = [...used].concat(sh.slots.filter(s => !fill[s.id].length && s.staple).map(s => s.staple)).concat(sh.staples);
+    const unused = basket.filter(f => !used.has(f.name)).map(f => f.name);
+    out.push({kind: sh.kind, name, steps, ingredients, unused, usedCount, order});
+  });
+  return out.sort((a,b) => b.usedCount - a.usedCount || a.order - b.order);
+}
+function whyText(basket){
+  const {covered, suggestions} = coverage(basket);
+  if(covered.length){
+    const [x,y] = covered[0].split('_');
+    const fa = basket.find(f => f.has.includes(x)), fb = basket.find(f => f.has.includes(y) && f !== fa) || fa;
+    return fa === fb ? `${fa.name} ${verb(fa.name,'carries','carry')} both ${CH[x].nutrient} and ${CH[y].nutrient} — a whole buddy team in one food!`
+                     : `${fa.name} ${verb(fa.name,'brings','bring')} ${CH[x].nutrient} and ${fb.name} ${verb(fb.name,'brings','bring')} ${CH[y].nutrient} — ${CH[x].name} and ${CH[y].name} are buddies!`;
+  }
+  if(suggestions.length){ const s = suggestions[0]; const [x,y]=s.key.split('_'); return `A tasty mix. Add ${s.food.name.toLowerCase()} and it becomes a ${CH[x].name} + ${CH[y].name} buddy team.`; }
+  return "A tasty mix to try.";
+}
+
+/* ---------------- recommend ---------------- */
+function recommend(){ recOpen = true; builtIdx = 0; fits = buildShapes(basketFoods()); renderResult(); $('#combo-result').scrollIntoView({behavior:"smooth", block:"start"}); }
+function nextShape(){ if(fits.length){ builtIdx = (builtIdx + 1) % fits.length; renderResult(); } }
+function renderResult(){
+  const el = $('#combo-result');
+  const basket = basketFoods();
+  if(!recOpen || !basket.length){ el.innerHTML = ""; return; }
+  const box = boxMatches(basket);
+  const b = fits[builtIdx];
+  const {suggestions} = coverage(basket);
+  el.innerHTML = `
+    <div style="height:14px"></div>
+    ${box.length ? `<div class="mm-label">FROM THE RECIPE BOX</div>` + box.map(m => `
+      <div class="mm-box" onclick="openRecipe('${m.r.id}')" style="cursor:pointer">
+        <div class="n">${m.r.name}</div>
+        <div class="u">Uses ${m.used.length} of your ${basket.length} food${basket.length===1?'':'s'} · tested recipe · tap to open</div>
+      </div>`).join('') : ''}
+    <div class="mm-label">BUILT FROM YOUR BASKET</div>
+    ${b ? `
+      <div class="mm-built">
+        <div class="t">${b.name}</div>
+        <div class="k">${b.kind} shape · uses ${b.usedCount} of your ${basket.length} food${basket.length===1?'':'s'}${fits.length>1?` · idea ${builtIdx+1} of ${fits.length}`:''}</div>
+        <div class="why">${whyText(basket)}</div>
+        <div class="ing"><b>You'll need:</b> ${b.ingredients.join(", ")}</div>
+        <ol>${b.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+        ${b.unused.length ? `<div class="note">Not used in this one: ${b.unused.join(", ")}.</div>` : ''}
+        <div class="note">Built from a recipe shape, not a tested recipe. A grown-up decides what tastes good — and checks for allergies.</div>
+        <div class="mm-btnrow" style="margin-top:10px">
+          <button class="btn light" style="flex:1" onclick="saveBuilt()">${isBuiltSaved(b)?'♥ Saved':'♡ Save'}</button>
+          ${fits.length > 1 ? `<button class="btn light" style="flex:1" onclick="nextShape()">Another shape</button>` : ''}
+        </div>
+      </div>`
+    : `<div class="mm-built"><div class="why">These foods don't fit a recipe shape yet.</div>
+        <div class="note">${suggestions.length ? `Try adding ${suggestions.map(s=>s.food.name.toLowerCase()).join(" or ")}, or ` : "Try adding "}a grain, a green, or a protein — and keep the mix all sweet or all savoury.</div></div>`}
+    <button class="btn light" onclick="recOpen=false;renderResult();window.scrollTo(0,0)" style="margin-top:4px">‹ Back to basket</button>`;
+}
+
+/* ---------------- saved ideas (pairs from v4 + built recipes) ---------------- */
+function builtKey(b){ return "built|" + b.name + "|" + b.ingredients.join(","); }
+function isBuiltSaved(b){ return savedIdeas.some(i => i.kind === "built" && builtKey(i) === builtKey(b)); }
+function saveBuilt(){
+  const b = fits[builtIdx]; if(!b) return;
+  const i = savedIdeas.findIndex(x => x.kind === "built" && builtKey(x) === builtKey(b));
+  if(i > -1) savedIdeas.splice(i,1);
+  else savedIdeas.push({kind:"built", name:b.name, kindLabel:b.kind, ingredients:b.ingredients, steps:b.steps, why:whyText(basketFoods())});
+  saveState(); renderResult(); renderSaved();
+}
+function removeIdea(i){ savedIdeas.splice(i,1); saveState(); renderResult(); renderSaved(); }
 function renderSaved(){
   const el = $('#combo-saved');
   if(!savedIdeas.length){ el.innerHTML = ""; return; }
@@ -1206,13 +1491,15 @@ function renderSaved(){
     <div class="mm-saved-head"><h2 style="margin:0">My ideas <span class="muted" style="font-weight:500">(${savedIdeas.length})</span></h2></div>
     <p class="muted" style="font-size:12px;margin:2px 0 8px">Saved on this device only.</p>
     ${savedIdeas.map((i, idx) => {
-      const [x,y] = i.pair.split('_');
-      const rec = recipeFor(i.pair, i.a, i.b);
-      return `<div class="mm-row">
-        <div style="flex:1"><div class="n">${i.a} + ${i.b}</div>
-          <div style="font-size:11px;color:var(--muted)">${CH[x].name} + ${CH[y].name}${rec ? ` · <span class="r">${rec.name}</span>` : ''}</div></div>
-        <button class="mm-x" aria-label="Remove" onclick="removeIdea(${idx})">×</button>
-      </div>`;
+      if(i.kind === "built") return `<div class="mm-row" style="align-items:flex-start">
+        <div style="flex:1"><div class="n">${i.name}</div>
+          <div style="font-size:11px;color:var(--muted)">${i.kindLabel} · ${i.ingredients.slice(0,4).join(", ")}${i.ingredients.length>4?"…":""}</div>
+          <details class="mm-steps"><summary>Show steps</summary><ol>${i.steps.map(s=>`<li>${s}</li>`).join('')}</ol></details></div>
+        <button class="mm-x" aria-label="Remove" onclick="removeIdea(${idx})">×</button></div>`;
+      const [x,y] = (i.pair||"_").split('_');
+      return `<div class="mm-row"><div style="flex:1"><div class="n">${i.a} + ${i.b}</div>
+        <div style="font-size:11px;color:var(--muted)">${CH[x]?CH[x].name:''} + ${CH[y]?CH[y].name:''}</div></div>
+        <button class="mm-x" aria-label="Remove" onclick="removeIdea(${idx})">×</button></div>`;
     }).join('')}`;
 }
 
