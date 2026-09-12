@@ -228,7 +228,7 @@
 
   <!-- ============ SCREEN: VILLAGE ============ -->
   <section class="screen active" id="s-village">
-    <h1>Vitamin Village</h1>
+    <h1>Vitamin Village <span style="font-size:11px;font-weight:600;color:var(--muted);vertical-align:middle;margin-left:6px">v3</span></h1>
     <div class="progress">
       <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;">
         <span>Buddies discovered</span><span id="prog-count">0 / 10</span>
@@ -1257,6 +1257,14 @@ renderGrid();
 renderRecipeList();
 updateProgress();
 renderOnboard();
+
+/* TEST SHORTCUT — add ?test=celebrate to the URL to preview the celebration
+   without finding all 10 pairs. Handy for demos and for checking a deploy. */
+if (new URLSearchParams(location.search).get("test") === "celebrate") {
+  document.getElementById("onboard").style.display = "none";
+  BUDDY_KEYS.forEach(k => discovered.add(k));
+  updateProgress();
+}
 
 /* =========================================================================
    SERVICE WORKER — makes the app installable + work offline.
