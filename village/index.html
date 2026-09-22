@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<!--
+  Vitamin Village — explorable prototype (first playable)
+  Copyright (c) 2026 John Hubert LLC. All rights reserved. See /LICENSE.
+
+  What this is: the village as a PLACE. The player walks a top-down map,
+  talks to the ten nutrient buddies, takes on "find my buddy" errands, and
+  cooks the unlocked dishes in the Kitchen. Same data, same lessons as the
+  tab version (data.js is extracted from it), reframed as a game.
+
+  Runs fully offline. Progress is saved on-device only (localStorage) and
+  shares the "vv-discovered" key with the tab version, so badges carry over.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#8CC26B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Vitamin Village — Explore</title>
+<style>
+  :root{
+    --paper:#FBFAF7; --ink:#2B2A26; --muted:#6B6A64; --line:#E6E2D8;
+    --leaf:#7DB33F; --sun:#E0A93E; --sky:#4E97DD; --berry:#D75E8A;
+    --radius:18px; --safe-b: env(safe-area-inset-bottom, 0px); --safe-t: env(safe-area-inset-top, 0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:#8CC26B;font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);touch-action:none;-webkit-user-select:none;user-select:none}
+  #game{position:fixed;inset:0;display:block}
+  .hud{position:fixed;left:0;right:0;pointer-events:none}
+  #top{top:0;padding:calc(10px + var(--safe-t)) 12px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .pill{pointer-events:auto;background:rgba(251,250,247,.94);border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:14px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.08);display:flex;align-items:center;gap:8px}
+  .pill .bar{width:64px;height:8px;background:#EEE9DD;border-radius:6px;overflow:hidden}
+  .pill .bar i{display:block;height:100%;width:0;background:var(--leaf);transition:width .4s}
+  #quest{pointer-events:auto;background:rgba(251,250,247,.94);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-size:13.5px;max-width:62%;box-shadow:0 2px 8px rgba(0,0,0,.08);display:none;line-height:1.3}
+  #quest b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+  #quest.on{display:block}
+  #hint{bottom:calc(14px + var(--safe-b));text-align:center;font-size:14px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35);font-weight:600;opacity:0;transition:opacity .4s}
+  #hint.on{opacity:1}
+
+  /* dialogue sheet */
+  #sheet{position:fixed;left:0;right:0;bottom:0;transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.8,.2,1);background:var(--paper);border-radius:22px 22px 0 0;padding:14px 16px calc(16px + var(--safe-b));box-shadow:0 -6px 30px rgba(0,0,0,.18);max-height:78vh;overflow:auto}
+  #sheet.open{transform:translateY(0)}
+  .who{display:flex;gap:12px;align-items:center;margin-bottom:8px}
+  .who .name{font-weight:800;font-size:17px}
+  .who .role{font-size:13px;color:var(--muted)}
+  .say{font-size:17px;line-height:1.45;margin:0 0 12px}
+  .btns{display:flex;flex-wrap:wrap;gap:8px}
+  .btn{border:0;border-radius:14px;padding:12px 16px;font-size:16px;font-weight:700;background:var(--leaf);color:#fff;cursor:pointer;flex:1 1 auto}
+  .btn.ghost{background:#EEE9DD;color:var(--ink)}
+  .btn.sun{background:var(--sun)}
+  .btn.sky{background:var(--sky)}
+  .btn.small{font-size:14px;padding:9px 12px;flex:0 0 auto}
+  .badgepop{display:flex;align-items:center;gap:10px;background:#EAF3DE;border:1px solid var(--leaf);border-radius:14px;padding:10px 12px;margin:0 0 12px;font-weight:700}
+
+  /* panels (kitchen, market, badges) */
+  .panel{position:fixed;inset:0;background:var(--paper);transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;z-index:20}
+  .panel.open{transform:translateY(0)}
+  .phead{display:flex;align-items:center;gap:10px;padding:calc(12px + var(--safe-t)) 14px 10px;border-bottom:1px solid var(--line);background:#fff}
+  .phead h2{margin:0;font-size:20px;flex:1}
+  .phead .x{border:0;background:#EEE9DD;border-radius:999px;width:38px;height:38px;font-size:18px;font-weight:800;cursor:pointer}
+  .tabs{display:flex;gap:6px;padding:10px 14px;overflow-x:auto;border-bottom:1px solid var(--line);background:#fff}
+  .tab{border:0;border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px;background:#EEE9DD;color:var(--ink);white-space:nowrap;cursor:pointer}
+  .tab.on{background:var(--ink);color:#fff}
+  .pbody{flex:1;overflow:auto;padding:12px 14px calc(20px + var(--safe-b))}
+  .menu{display:grid;gap:10px}
+  .dish{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;cursor:pointer}
+  .dish .em{font-size:34px;text-align:center;line-height:1}
+  .dish .n{font-weight:800;font-size:16px}
+  .dish .w{font-size:13px;color:var(--muted);margin-top:2px}
+  .dish.locked{opacity:.55;background:#F6F3EC}
+  .dish.locked .em{filter:grayscale(1)}
+  .dish.new{border-color:var(--sun);box-shadow:0 0 0 3px #FAEEDA}
+  .dish .tag{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--sun)}
+  .dish .done{font-size:20px}
+  .pairchips{display:flex;gap:4px}
+  .chip{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:11px;font-weight:800}
+  .recipe h3{margin:0 0 4px;font-size:22px}
+  .recipe .why{background:#FAEEDA;border-radius:12px;padding:10px 12px;margin:10px 0;font-size:15px}
+  .recipe h4{margin:14px 0 6px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .recipe ul{margin:0;padding-left:20px;font-size:15.5px;line-height:1.5}
+  .steps li{margin-bottom:6px;cursor:pointer}
+  .steps li.done{text-decoration:line-through;color:var(--muted)}
+  .grown{font-size:13px;color:var(--muted);border-top:1px dashed var(--line);margin-top:14px;padding-top:10px}
+  .foods{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .food{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:6px}
+  .food .cat{font-size:11px;color:var(--muted);font-weight:500;display:block}
+  .badges{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .badge{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;text-align:center}
+  .badge.locked{opacity:.4}
+  .badge .bn{font-weight:700;font-size:13px;margin-top:6px}
+  .empty{color:var(--muted);text-align:center;padding:30px 10px;font-size:15px}
+
+  /* onboarding */
+  #start{position:fixed;inset:0;background:linear-gradient(#BFE0A2,#8CC26B);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;z-index:30;text-align:center}
+  #start h1{margin:0;font-size:34px;color:#264d10;letter-spacing:-.02em}
+  #start p{margin:0;max-width:34ch;font-size:16px;color:#264d10}
+  .jerseys{display:flex;gap:12px;margin:8px 0}
+  .jersey{width:64px;height:64px;border-radius:50%;border:4px solid transparent;cursor:pointer}
+  .jersey.on{border-color:#fff;box-shadow:0 0 0 3px #264d10}
+  #start .btn{flex:0 0 auto;padding:14px 26px;font-size:18px}
+  .ok{background:#264d10;color:#fff;font-size:12px;border-radius:8px;padding:4px 8px}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div class="hud" id="top">
+  <div class="pill" id="prog"><span>🏅</span><span id="progn">0 / 10</span><span class="bar"><i id="progbar"></i></span></div>
+  <div id="quest"><b>Errand</b><span id="questtext"></span></div>
+</div>
+<div class="hud" id="hint">Tap where you want to walk</div>
+
+<div id="sheet" role="dialog"></div>
+
+<div class="panel" id="p-kitchen">
+  <div class="phead"><span style="font-size:26px">🍳</span><h2>The Kitchen</h2><button class="x" onclick="closePanel()">✕</button></div>
+  <div class="tabs" id="mealtabs"></div>
+  <div class="pbody" id="kitchenbody"></div>
+</div>
+<div class="panel" id="p-market">
+  <div class="phead"><span style="font-size:26px">🧺</span><h2>The Market</h2><button class="x" onclick="closePanel()">✕</button></div>
+  <div class="tabs" id="markettabs"></div>
+  <div class="pbody" id="marketbody"></div>
+</div>
+<div class="panel" id="p-badges">
+  <div class="phead"><span style="font-size:26px">🏅</span><h2>Badge Hall</h2><button class="x" onclick="closePanel()">✕</button></div>
+  <div class="pbody" id="badgebody"></div>
+</div>
+
+<div id="start">
+  <h1>Vitamin Village</h1>
+  <p>Ten tiny helpers live here. Some are best buddies. Walk around, meet them, and help them find each other.</p>
+  <p><b>Pick your jersey:</b></p>
+  <div class="jerseys" id="jerseys"></div>
+  <button class="btn" id="startbtn">Let's go!</button>
+  <span class="ok">Works offline · nothing is collected</span>
+</div>
+
+<script src="data.js"></script>
+<script>
+/* =========================================================================
+   0) SAVE STATE (on-device only)
+   ========================================================================= */
+const KEYS = { discovered:"vv-discovered", cooked:"vvv-cooked", jersey:"vvv-jersey", seen:"vvv-seen" };
+const discovered = new Set();          // buddy pair keys, shared with the tab version
+const cooked = new Set();              // recipe ids
+let jerseyColor = null;
+function load(){ try{
+  JSON.parse(localStorage.getItem(KEYS.discovered)||"[]").forEach(k=>discovered.add(k));
+  JSON.parse(localStorage.getItem(KEYS.cooked)||"[]").forEach(k=>cooked.add(k));
+  jerseyColor = localStorage.getItem(KEYS.jersey);
+}catch(e){} }
+function save(){ try{
+  localStorage.setItem(KEYS.discovered, JSON.stringify([...discovered]));
+  localStorage.setItem(KEYS.cooked, JSON.stringify([...cooked]));
+  if(jerseyColor) localStorage.setItem(KEYS.jersey, jerseyColor);
+}catch(e){} }
+const ruleKey = (a,b)=>[a,b].sort().join("_");
+const $ = s=>document.querySelector(s);
+
+/* =========================================================================
+   1) THE MAP  (grid of tiles; T = world units per tile)
+   ========================================================================= */
+const T = 56, COLS = 20, ROWS = 26;
+const W = COLS*T, H = ROWS*T;
+// Places: buildings with a door tile the player walks to.
+const PLACES = {
+  kitchen:{ kind:"kitchen", x:8, y:3, w:4, h:3, door:{x:9,y:6}, label:"Kitchen" },
+  market: { kind:"market",  x:2, y:11, w:3, h:2, door:{x:3,y:13}, label:"Market" },
+  badges: { kind:"badges",  x:15, y:11, w:3, h:2, door:{x:16,y:13}, label:"Badge Hall" },
+};
+// Buddy houses: 2x2, door below, NPC stands beside the door.
+const HOUSES = [
+  {id:"d",   x:2,  y:3},  {id:"cal", x:14, y:3},
+  {id:"a",   x:1,  y:7},  {id:"k",   x:17, y:7},
+  {id:"c",   x:2,  y:17}, {id:"iron",x:16, y:17},
+  {id:"zinc",x:5,  y:21}, {id:"mag", x:13, y:21},
+  {id:"cop", x:9,  y:22}, {id:"e",   x:9,  y:15},
+];
+HOUSES.forEach(h=>{ h.w=2; h.h=2; h.door={x:h.x, y:h.y+2}; h.npc={x:h.x+1.5, y:h.y+2.6}; });
+const POND = {x:17.2, y:24.6, rx:2.3, ry:1.4};
+const TREES = [[6,1],[13,1],[1,1],[18,1],[6,9],[13,9],[0,14],[19,15],[7,12],[12,12],[1,24],[4,25],[11,25],[19,21],[7,19],[12,19],[19,4],[0,10],[16,9],[3,9]];
+const FOUNTAIN = {x:9, y:9};
+const SPAWN = {x:10, y:12};
+
+// Walkability grid
+const blocked = Array.from({length:ROWS},()=>Array(COLS).fill(false));
+function blockRect(x,y,w,h){ for(let j=y;j<y+h;j++) for(let i=x;i<x+w;i++) if(j>=0&&j<ROWS&&i>=0&&i<COLS) blocked[j][i]=true; }
+Object.values(PLACES).forEach(p=>blockRect(p.x,p.y,p.w,p.h));
+HOUSES.forEach(h=>blockRect(h.x,h.y,h.w,h.h));
+TREES.forEach(([x,y])=>blockRect(x,y,1,1));
+for(let j=0;j<ROWS;j++) for(let i=0;i<COLS;i++){ const dx=(i+.5-POND.x)/POND.rx, dy=(j+.5-POND.y)/POND.ry; if(dx*dx+dy*dy<1) blocked[j][i]=true; }
+blockRect(FOUNTAIN.x, FOUNTAIN.y, 2, 2);
+const walkable = (x,y)=> x>=0&&y>=0&&x<COLS&&y<ROWS&&!blocked[y][x];
+
+// BFS pathfinding on the grid (4-neighbour)
+function findPath(sx,sy,tx,ty){
+  if(!walkable(tx,ty)) return null;
+  const key=(x,y)=>y*COLS+x, prev=new Map(); prev.set(key(sx,sy),-1);
+  const q=[[sx,sy]];
+  while(q.length){
+    const [x,y]=q.shift(); if(x===tx&&y===ty) break;
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx, ny=y+dy; if(!walkable(nx,ny)||prev.has(key(nx,ny))) continue;
+      prev.set(key(nx,ny),key(x,y)); q.push([nx,ny]);
+    }
+  }
+  if(!prev.has(key(tx,ty))) return null;
+  const path=[]; let k=key(tx,ty);
+  while(k!==-1){ path.push({x:k%COLS, y:Math.floor(k/COLS)}); k=prev.get(k); }
+  return path.reverse();
+}
+
+/* =========================================================================
+   2) ACTORS
+   ========================================================================= */
+const player = { x:SPAWN.x+.5, y:SPAWN.y+.5, path:[], speed:4.2, t:0, face:1, onArrive:null };
+const npcs = HOUSES.map(h=>({ id:h.id, c:CH[h.id], x:h.npc.x, y:h.npc.y, house:h, bob:Math.random()*6 }));
+const npcById = Object.fromEntries(npcs.map(n=>[n.id,n]));
+function houseLit(id){ return BUDDY_KEYS.some(k=>k.split("_").includes(id) && discovered.has(k)); }
+
+/* =========================================================================
+   3) RENDERING (canvas)
+   ========================================================================= */
+const cv = $("#game"), ctx = cv.getContext("2d");
+let vw=0, vh=0, dpr=1, scale=1, cam={x:0,y:0};
+function resize(){
+  dpr = Math.min(window.devicePixelRatio||1, 2);
+  vw = window.innerWidth; vh = window.innerHeight;
+  cv.width = vw*dpr; cv.height = vh*dpr; cv.style.width=vw+"px"; cv.style.height=vh+"px";
+  scale = Math.max(vw/(9.5*T), vh/(19*T)); // ~9.5 tiles across on a phone, ~19 tall
+}
+window.addEventListener("resize", resize); resize();
+
+function grass(){
+  ctx.fillStyle="#8CC26B"; ctx.fillRect(0,0,W,H);
+  // soft tufts, deterministic
+  ctx.fillStyle="rgba(255,255,255,0.10)";
+  for(let i=0;i<220;i++){ const x=(i*97)%W, y=(i*193)%H; ctx.fillRect(x,y,6,3); }
+  ctx.fillStyle="rgba(60,110,40,0.10)";
+  for(let i=0;i<180;i++){ const x=(i*151+40)%W, y=(i*89+20)%H; ctx.fillRect(x,y,5,3); }
+}
+function pathStroke(pts, width){
+  ctx.strokeStyle="#D9C58F"; ctx.lineWidth=width; ctx.lineCap="round"; ctx.lineJoin="round";
+  ctx.beginPath(); pts.forEach((p,i)=> i?ctx.lineTo(p[0]*T,p[1]*T):ctx.moveTo(p[0]*T,p[1]*T)); ctx.stroke();
+  ctx.strokeStyle="#E8D7A6"; ctx.lineWidth=width*0.55; ctx.stroke();
+}
+function paths(){
+  // A loop road past every front door, plus three connectors into the square.
+  pathStroke([[2.5,5.5],[15.5,5.5]], 28);          // north street (Sunny D, Cal, Kitchen)
+  pathStroke([[2.5,5.5],[2.5,19.5]], 28);          // west street (Ava, Market, Vita C)
+  pathStroke([[17.5,5.5],[17.5,19.5]], 28);        // east street (Kip, Badge Hall, Iggy)
+  pathStroke([[2.5,19.5],[17.5,19.5]], 28);        // south street
+  pathStroke([[5.5,19.5],[5.5,23.5],[13.5,23.5],[13.5,19.5]], 24); // lane to Zippy, Coop, Maggie
+  pathStroke([[10.5,23.5],[10.5,19.5]], 24);
+  pathStroke([[10.5,6.5],[10.5,9]], 30);           // kitchen to square
+  pathStroke([[10.5,12],[10.5,17.5]], 26);         // square to Ellie / south
+  pathStroke([[3.5,13.5],[7.5,12]], 26);           // market to square
+  pathStroke([[16.5,13.5],[13,12]], 26);           // badge hall to square
+  pathStroke([[2.5,9.5],[2.5,9.5]], 28);
+  // square
+  ctx.fillStyle="#E8D7A6"; ctx.beginPath(); ctx.ellipse(FOUNTAIN.x*T+T*0.5, FOUNTAIN.y*T+T*0.5, 2.6*T, 1.9*T, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle="#D9C58F"; ctx.lineWidth=6; ctx.stroke();
+}
+function pond(){
+  ctx.fillStyle="#7FB7E6"; ctx.beginPath(); ctx.ellipse(POND.x*T, POND.y*T, POND.rx*T, POND.ry*T, 0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.35)"; ctx.beginPath(); ctx.ellipse(POND.x*T-30, POND.y*T-20, 40, 12, -0.3,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle="#5D9AD1"; ctx.lineWidth=5; ctx.beginPath(); ctx.ellipse(POND.x*T, POND.y*T, POND.rx*T, POND.ry*T, 0,0,Math.PI*2); ctx.stroke();
+}
+function fountain(t){
+  const x=FOUNTAIN.x*T+T*0.5, y=FOUNTAIN.y*T+T*0.5;
+  ctx.fillStyle="#C9C2B2"; ctx.beginPath(); ctx.ellipse(x,y+8,46,26,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#7FB7E6"; ctx.beginPath(); ctx.ellipse(x,y+4,36,18,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#A9A395"; ctx.fillRect(x-6,y-40,12,44);
+  ctx.fillStyle="rgba(255,255,255,.8)";
+  for(let i=0;i<5;i++){ const a=i/5*Math.PI*2+t*2, r=14+8*Math.sin(t*3+i); ctx.beginPath(); ctx.arc(x+Math.cos(a)*r, y-36+Math.sin(a)*4+((t*40+i*10)%22), 3,0,Math.PI*2); ctx.fill(); }
+}
+function tree(x,y){
+  const cx=(x+.5)*T, cy=(y+1)*T;
+  ctx.fillStyle="rgba(0,0,0,.12)"; ctx.beginPath(); ctx.ellipse(cx,cy-2,22,9,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#8B5A2B"; ctx.fillRect(cx-5, cy-30, 10, 30);
+  ctx.fillStyle="#4F9A3A"; ctx.beginPath(); ctx.arc(cx, cy-46, 26, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle="#63B04A"; ctx.beginPath(); ctx.arc(cx-8, cy-54, 16, 0, Math.PI*2); ctx.fill();
+}
+function building(b, lit, t){
+  const x=b.x*T, y=b.y*T, w=b.w*T, h=b.h*T, roofH = T*0.9;
+  const col = b.color||"#F2E6CF", roof = b.roof||"#C9603E";
+  ctx.fillStyle="rgba(0,0,0,.14)"; ctx.beginPath(); ctx.ellipse(x+w/2, y+h+6, w*0.55, 12, 0,0,Math.PI*2); ctx.fill();
+  // front wall
+  ctx.fillStyle=col; ctx.fillRect(x, y+roofH*0.6, w, h-roofH*0.6);
+  ctx.strokeStyle="rgba(0,0,0,.18)"; ctx.lineWidth=3; ctx.strokeRect(x, y+roofH*0.6, w, h-roofH*0.6);
+  // roof (angled top-down)
+  ctx.fillStyle=roof; ctx.beginPath(); ctx.moveTo(x-8, y+roofH*0.6); ctx.lineTo(x+14, y); ctx.lineTo(x+w-14, y); ctx.lineTo(x+w+8, y+roofH*0.6); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.18)"; ctx.fillRect(x+14, y+6, w-28, 8);
+  // door
+  const dx=(b.door.x+.5)*T, doorW=T*0.5, doorH=T*0.7;
+  ctx.fillStyle="#6B4423"; ctx.beginPath(); ctx.roundRect(dx-doorW/2, y+h-doorH, doorW, doorH, [8,8,0,0]); ctx.fill();
+  ctx.fillStyle="#E0A93E"; ctx.beginPath(); ctx.arc(dx+doorW/4, y+h-doorH/2, 3,0,Math.PI*2); ctx.fill();
+  // window
+  const wx = x+w-T*0.55, wy = y+roofH*0.6+14;
+  ctx.fillStyle = lit ? "#FFE28A" : "#B9D6EF"; ctx.fillRect(wx, wy, T*0.36, T*0.36);
+  if(lit){ ctx.fillStyle="rgba(255,226,138,.35)"; ctx.fillRect(wx-6, wy-6, T*0.36+12, T*0.36+12); }
+  ctx.strokeStyle="#fff"; ctx.lineWidth=2; ctx.strokeRect(wx, wy, T*0.36, T*0.36);
+  ctx.beginPath(); ctx.moveTo(wx+T*0.18, wy); ctx.lineTo(wx+T*0.18, wy+T*0.36); ctx.moveTo(wx, wy+T*0.18); ctx.lineTo(wx+T*0.36, wy+T*0.18); ctx.stroke();
+  // sign
+  if(b.label){
+    ctx.font=`700 ${T*0.28}px -apple-system, Helvetica, Arial, sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle";
+    const tw = ctx.measureText(b.label).width+18;
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.roundRect(x+w/2-tw/2, y+roofH*0.6+8, tw, T*0.42, 8); ctx.fill();
+    ctx.fillStyle="#2B2A26"; ctx.fillText(b.label, x+w/2, y+roofH*0.6+8+T*0.21);
+  }
+  if(b.kind==="kitchen"){ // chimney + steam
+    ctx.fillStyle="#8B5A2B"; ctx.fillRect(x+w-30, y-16, 16, 30);
+    ctx.fillStyle="rgba(255,255,255,.7)"; for(let i=0;i<3;i++){ const p=((t*0.6)+i*0.33)%1; ctx.beginPath(); ctx.arc(x+w-22+Math.sin(p*6)*6, y-20-p*40, 6+p*6, 0, Math.PI*2); ctx.fill(); }
+  }
+  if(b.kind==="market"){ // awning stripes
+    for(let i=0;i<b.w*4;i++){ ctx.fillStyle = i%2?"#fff":"#D75E8A"; ctx.fillRect(x-8+i*(w+16)/(b.w*4), y+roofH*0.6-10, (w+16)/(b.w*4)+1, 14); }
+  }
+  if(b.kind==="badges"){ // pillars
+    ctx.fillStyle="#fff"; ctx.fillRect(x+10, y+roofH*0.6, 10, h-roofH*0.6); ctx.fillRect(x+w-20, y+roofH*0.6, 10, h-roofH*0.6);
+  }
+}
+// Jersey mascot, ported from avatar() in the tab version.
+function mascot(c, cx, cy, size, bob, walking, face){
+  const s = size/120; // 90x120 design space
+  ctx.save(); ctx.translate(cx - 45*s, cy - 120*s + bob); ctx.scale(s, s);
+  if(face<0){ ctx.translate(90,0); ctx.scale(-1,1); }
+  ctx.fillStyle="rgba(0,0,0,.14)"; ctx.beginPath(); ctx.ellipse(45,116-bob/s,26,8,0,0,Math.PI*2); ctx.fill();
+  // legs
+  const lk = walking? Math.sin(performance.now()/90)*8 : 0;
+  ctx.fillStyle="#3a3a38"; ctx.fillRect(33+lk*0.3, 100, 9, 16); ctx.fillRect(48-lk*0.3, 100, 9, 16);
+  // arms
+  ctx.fillStyle=c.jersey; ctx.beginPath(); ctx.ellipse(18,61+lk*0.4,9,11,0,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(72,61-lk*0.4,9,11,0,0,Math.PI*2); ctx.fill();
+  // jersey
+  ctx.beginPath(); ctx.moveTo(23,50); ctx.quadraticCurveTo(45,43,67,50); ctx.lineTo(63,106); ctx.quadraticCurveTo(63,110,59,110); ctx.lineTo(31,110); ctx.quadraticCurveTo(27,110,27,106); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.9)"; ctx.beginPath(); ctx.moveTo(37,48); ctx.quadraticCurveTo(45,55,53,48); ctx.quadraticCurveTo(52,52,45,53); ctx.quadraticCurveTo(38,52,37,48); ctx.fill();
+  // head
+  ctx.fillStyle="#F6DFC4"; ctx.beginPath(); ctx.arc(45,26,17,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="rgba(229,138,160,.4)"; ctx.beginPath(); ctx.arc(34,31,2.4,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(56,31,2.4,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#3a3a38"; ctx.beginPath(); ctx.arc(39,25,2.3,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(51,25,2.3,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle="#3a3a38"; ctx.lineWidth=2; ctx.lineCap="round"; ctx.beginPath(); ctx.moveTo(39,32); ctx.quadraticCurveTo(45,37,51,32); ctx.stroke();
+  // crest
+  if(c.sym){
+    ctx.fillStyle="#fff"; ctx.strokeStyle=c.ink; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(45,77,13,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=c.ink; ctx.font=`700 ${c.sym.length>1?12:15}px sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle";
+    if(face<0){ ctx.save(); ctx.translate(45,77); ctx.scale(-1,1); ctx.fillText(c.sym,0,0); ctx.restore(); } else ctx.fillText(c.sym,45,77);
+  }
+  ctx.restore();
+}
+function nameTag(text, x, y, bg, fg){
+  ctx.font=`700 ${T*0.26}px -apple-system, Helvetica, Arial, sans-serif`; ctx.textAlign="center"; ctx.textBaseline="middle";
+  const w=ctx.measureText(text).width+16;
+  ctx.fillStyle=bg; ctx.beginPath(); ctx.roundRect(x-w/2, y-10, w, 20, 10); ctx.fill();
+  ctx.fillStyle=fg; ctx.fillText(text, x, y);
+}
+function marker(x,y,t){ // tap-target ring
+  ctx.strokeStyle="rgba(255,255,255,.9)"; ctx.lineWidth=3; ctx.beginPath(); ctx.ellipse(x,y,14+Math.sin(t*6)*3,7+Math.sin(t*6)*1.5,0,0,Math.PI*2); ctx.stroke();
+}
+
+let lastT=0, tapMarker=null, questArrow=null;
+function frame(now){
+  const dt=Math.min(0.05,(now-lastT)/1000||0); lastT=now; const t=now/1000;
+  update(dt);
+  // camera
+  const tx = player.x*T - vw/scale/2, ty = player.y*T - vh/scale/2;
+  cam.x += (Math.max(0, Math.min(W - vw/scale, tx)) - cam.x)*0.12;
+  cam.y += (Math.max(0, Math.min(H - vh/scale, ty)) - cam.y)*0.12;
+  ctx.setTransform(dpr*scale,0,0,dpr*scale,-cam.x*dpr*scale,-cam.y*dpr*scale);
+  grass(); paths(); pond();
+  const items=[];
+  TREES.forEach(([x,y])=>items.push({y:(y+1)*T, draw:()=>tree(x,y)}));
+  Object.values(PLACES).forEach(p=>items.push({y:(p.y+p.h)*T, draw:()=>building(p,false,t)}));
+  HOUSES.forEach(h=>items.push({y:(h.y+h.h)*T, draw:()=>building(Object.assign({color:CH[h.id].bg, roof:CH[h.id].jersey}, h), houseLit(h.id), t)}));
+  items.push({y:(FOUNTAIN.y+1)*T+8, draw:()=>fountain(t)});
+  npcs.forEach(n=>{ const bob=Math.sin(t*2+n.bob)*2; items.push({y:n.y*T, draw:()=>{ mascot(n.c, n.x*T, n.y*T, T*1.15, bob, false, 1); nameTag(n.c.name, n.x*T, n.y*T+10, "#fff", n.c.ink); if(questArrow===n.id){ ctx.fillStyle="#E0A93E"; ctx.beginPath(); const ay=n.y*T-T*1.35+Math.sin(t*5)*5; ctx.moveTo(n.x*T-8,ay-14); ctx.lineTo(n.x*T+8,ay-14); ctx.lineTo(n.x*T,ay); ctx.closePath(); ctx.fill(); } }}); });
+  items.push({y:player.y*T, draw:()=>mascot({jersey:jerseyColor||"#4E97DD", ink:"#2B2A26", sym:""}, player.x*T, player.y*T, T*1.15, player.path.length?Math.abs(Math.sin(t*10))*3:0, !!player.path.length, player.face)});
+  if(questArrow && PLACES[questArrow]){ const p=PLACES[questArrow]; items.push({y:1e9, draw:()=>{ ctx.fillStyle="#E0A93E"; const ax=(p.x+p.w/2)*T, ay=p.y*T-20+Math.sin(t*5)*5; ctx.beginPath(); ctx.moveTo(ax-8,ay-14); ctx.lineTo(ax+8,ay-14); ctx.lineTo(ax,ay); ctx.closePath(); ctx.fill(); }}); }
+  items.sort((a,b)=>a.y-b.y).forEach(i=>i.draw());
+  if(tapMarker){ marker(tapMarker.x, tapMarker.y, t); }
+  requestAnimationFrame(frame);
+}
+
+/* =========================================================================
+   4) MOVEMENT + INPUT
+   ========================================================================= */
+function update(dt){
+  if(!player.path.length){ return; }
+  const n=player.path[0], tx=n.x+.5, ty=n.y+.5;
+  const dx=tx-player.x, dy=ty-player.y, d=Math.hypot(dx,dy), step=player.speed*dt;
+  if(Math.abs(dx)>0.01) player.face = dx>0?1:-1;
+  if(d<=step){ player.x=tx; player.y=ty; player.path.shift(); if(!player.path.length){ tapMarker=null; const f=player.onArrive; player.onArrive=null; if(f) f(); } }
+  else { player.x+=dx/d*step; player.y+=dy/d*step; }
+}
+function walkTo(tx,ty,onArrive){
+  const sx=Math.floor(player.x), sy=Math.floor(player.y);
+  let path=findPath(sx,sy,tx,ty);
+  if(!path){ // try neighbours of the target
+    for(const [ax,ay] of [[0,1],[1,0],[-1,0],[0,-1]]){ path=findPath(sx,sy,tx+ax,ty+ay); if(path) break; }
+  }
+  if(!path) return false;
+  path.shift(); player.path=path; player.onArrive=onArrive||null; tapMarker={x:(tx+.5)*T,y:(ty+.5)*T};
+  if(!path.length && onArrive){ player.onArrive=null; tapMarker=null; onArrive(); }
+  return true;
+}
+function nearestWalkable(px,py){
+  const cx=Math.floor(px), cy=Math.floor(py);
+  if(walkable(cx,cy)) return {x:cx,y:cy};
+  let best=null, bd=1e9;
+  for(let j=cy-2;j<=cy+2;j++) for(let i=cx-2;i<=cx+2;i++){ if(!walkable(i,j)) continue; const d=Math.hypot(i+.5-px,j+.5-py); if(d<bd){bd=d;best={x:i,y:j};} }
+  return best;
+}
+cv.addEventListener("pointerdown", e=>{
+  if($("#sheet").classList.contains("open")){ closeSheet(); return; }
+  const wx=(e.clientX/scale+cam.x)/T, wy=(e.clientY/scale+cam.y)/T;
+  // NPC hit?
+  for(const n of npcs){ if(Math.abs(wx-n.x)<0.7 && wy>n.y-2.2 && wy<n.y+0.3){ walkTo(n.house.door.x, n.house.door.y, ()=>talk(n)); return; } }
+  // Building hit?
+  for(const [id,p] of Object.entries(PLACES)){ if(wx>=p.x-0.2&&wx<=p.x+p.w+0.2&&wy>=p.y-0.6&&wy<=p.y+p.h){ walkTo(p.door.x, p.door.y, ()=>openPlace(id)); return; } }
+  for(const h of HOUSES){ if(wx>=h.x&&wx<=h.x+h.w&&wy>=h.y-0.6&&wy<=h.y+h.h){ walkTo(h.door.x, h.door.y, ()=>talk(npcById[h.id])); return; } }
+  const t=nearestWalkable(wx,wy); if(t) walkTo(t.x,t.y);
+});
+
+/* =========================================================================
+   5) DIALOGUE + QUESTS
+   ========================================================================= */
+let quest=null; // {from, to, key, stage:"find"|"cook", recipe}
+function showQuest(){
+  const q=$("#quest"), qt=$("#questtext");
+  if(!quest){ q.classList.remove("on"); questArrow=null; return; }
+  q.classList.add("on");
+  if(quest.stage==="find"){ qt.textContent=`Find ${CH[quest.from].name}'s buddy. Clue: ${clueFor(quest.to)}`; questArrow=null; }
+  else { qt.textContent=`Go to the Kitchen and cook a dish for ${CH[quest.from].name} + ${CH[quest.to].name}.`; questArrow="kitchen"; }
+}
+function clueFor(id){
+  const c=CH[id]; const foods=FOODS.filter(f=>f.has.includes(id)).slice(0,2).map(f=>f.name.toLowerCase());
+  return `their job is "${c.does.replace(/\.$/,"")}", and you'll find them in ${foods.join(" and ")}.`;
+}
+function avatarHTML(c, w){
+  w=w||56; const h=Math.round(w*120/90), two=c.sym.length>1;
+  return `<svg viewBox="0 0 90 120" width="${w}" height="${h}"><ellipse cx="18" cy="61" rx="9" ry="11" fill="${c.jersey}"/><ellipse cx="72" cy="61" rx="9" ry="11" fill="${c.jersey}"/><path d="M23,50 Q45,43 67,50 L63,106 Q63,110 59,110 L31,110 Q27,110 27,106 Z" fill="${c.jersey}"/><path d="M37,48 Q45,55 53,48 Q52,52 45,53 Q38,52 37,48 Z" fill="#fff" opacity=".9"/><circle cx="45" cy="26" r="17" fill="#F6DFC4"/><circle cx="39" cy="25" r="2.3" fill="#3a3a38"/><circle cx="51" cy="25" r="2.3" fill="#3a3a38"/><path d="M39,32 Q45,37 51,32" stroke="#3a3a38" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="45" cy="77" r="13" fill="#fff" stroke="${c.ink}" stroke-width="1.5"/><text x="45" y="77" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-weight="700" font-size="${two?12:15}" fill="${c.ink}">${c.sym}</text></svg>`;
+}
+function chipHTML(c){ return `<span class="chip" style="background:${c.bg};color:${c.ink}">${c.sym}</span>`; }
+function sheet(c, text, buttons, extra){
+  const s=$("#sheet");
+  s.innerHTML = `${c?`<div class="who">${avatarHTML(c,50)}<div><div class="name">${c.name}</div><div class="role">${c.nutrient}</div></div></div>`:""}${extra||""}<p class="say">${text}</p><div class="btns">${buttons.map((b,i)=>`<button class="btn ${b.cls||""}" data-i="${i}">${b.label}</button>`).join("")}</div>`;
+  s.querySelectorAll("button").forEach(btn=>btn.onclick=()=>{ const b=buttons[+btn.dataset.i]; closeSheet(); if(b.go) b.go(); });
+  s.classList.add("open");
+}
+function closeSheet(){ const s=$("#sheet"); s.classList.remove("open"); setTimeout(()=>{ if(!s.classList.contains("open")) s.innerHTML=""; }, 300); }
+function pendingPairsFor(id){ return BUDDY_KEYS.filter(k=>k.split("_").includes(id) && !discovered.has(k)); }
+function otherOf(key,id){ const [a,b]=key.split("_"); return a===id?b:a; }
+
+function talk(n){
+  const c=n.c, id=n.id;
+  // 1. On an errand and this is the buddy we're looking for
+  if(quest && quest.stage==="find" && id===quest.to){
+    const key=quest.key, rule=RULES[key];
+    discovered.add(key); save(); updateProgress();
+    const recipe = RECIPES.find(r=>ruleKey(r.pair[0],r.pair[1])===key && !cooked.has(r.id)) || RECIPES.find(r=>ruleKey(r.pair[0],r.pair[1])===key);
+    quest.stage="cook"; quest.recipe=recipe.id; showQuest();
+    sheet(c, `${CH[quest.from].name}? We're best buddies! ${rule.kid} Let's cook something together — I just put <b>${recipe.name}</b> on the Kitchen menu.`,
+      [{label:"To the Kitchen!", go:()=>walkTo(PLACES.kitchen.door.x, PLACES.kitchen.door.y, ()=>openPlace("kitchen"))},{label:"Later", cls:"ghost"}],
+      `<div class="badgepop">🏅 New buddies discovered: ${CH[quest.from].name} + ${c.name}</div>`);
+    return;
+  }
+  // 2. On an errand, wrong buddy: teach a "space" rule if there is one, else nudge
+  if(quest && quest.stage==="find" && id!==quest.from){
+    const k=ruleKey(quest.from,id), r=RULES[k];
+    if(r && r.type==="space"){ sheet(c, `${CH[quest.from].name}? ${r.kid} So it's not me — we ${r.timing.toLowerCase()}. Keep looking!`, [{label:"Got it", cls:"ghost"}]); return; }
+    sheet(c, `Hmm, ${CH[quest.from].name} and I get along fine, but I'm not the buddy you're looking for. ${c.fact}`, [{label:"Thanks!", cls:"ghost"}]); return;
+  }
+  // 3. The quest-giver, mid-errand
+  if(quest && id===quest.from){
+    if(quest.stage==="find") sheet(c, `Any luck finding my buddy? Clue: ${clueFor(quest.to)}`, [{label:"On it!", cls:"ghost"}]);
+    else sheet(c, `Our dish is on the Kitchen menu! Go cook it and I'll be so happy.`, [{label:"To the Kitchen!", go:()=>walkTo(PLACES.kitchen.door.x, PLACES.kitchen.door.y, ()=>openPlace("kitchen"))},{label:"Later", cls:"ghost"}]);
+    return;
+  }
+  // 4. Free to chat: offer an errand, or celebrate if all done
+  const pending = pendingPairsFor(id);
+  if(quest){ sheet(c, `Hi! ${c.fact} (Finish ${CH[quest.from].name}'s errand first, then come back!)`, [{label:"OK", cls:"ghost"}]); return; }
+  if(pending.length){
+    const key=pending[0], to=otherOf(key,id);
+    sheet(c, `Hi, I'm ${c.name}! ${c.does} I work best with a friend, but I can't find them. Can you help? Clue: ${clueFor(to)}`,
+      [{label:"I'll find them!", go:()=>{ quest={from:id,to,key,stage:"find"}; showQuest(); }},{label:"Maybe later", cls:"ghost"}]);
+  } else {
+    sheet(c, `All my buddies are found — thank you! ${c.fact}`, [{label:"You're welcome!", cls:"ghost"}]);
+  }
+}
+
+/* =========================================================================
+   6) PLACES
+   ========================================================================= */
+function openPlace(id){
+  if(id==="kitchen") renderKitchen(quest&&quest.stage==="cook"?RECIPES.find(r=>r.id===quest.recipe).meal:"Breakfast");
+  if(id==="market") renderMarket("all");
+  if(id==="badges") renderBadges();
+  $("#p-"+id).classList.add("open");
+}
+function closePanel(){ document.querySelectorAll(".panel").forEach(p=>p.classList.remove("open")); }
+
+const MEALS=["Breakfast","Lunch","Dinner","Snack"];
+function renderKitchen(meal){
+  $("#mealtabs").innerHTML = MEALS.map(m=>`<button class="tab ${m===meal?"on":""}" onclick="renderKitchen('${m}')">${m}</button>`).join("");
+  const list = RECIPES.filter(r=>r.meal===meal);
+  const newId = quest&&quest.stage==="cook"?quest.recipe:null;
+  $("#kitchenbody").innerHTML = `<div class="menu">${list.map(r=>{
+    const key=ruleKey(r.pair[0],r.pair[1]), open=discovered.has(key), A=CH[r.pair[0]], B=CH[r.pair[1]];
+    if(!open) return `<div class="dish locked"><div class="em">❔</div><div><div class="n">Secret dish</div><div class="w">Find ${A.name} + ${B.name} to unlock</div></div><div class="pairchips">${chipHTML(A)}${chipHTML(B)}</div></div>`;
+    return `<div class="dish ${r.id===newId?"new":""}" onclick="openRecipe('${r.id}')"><div class="em">${RECIPE_EMOJI[r.id]||"🍽"}</div><div>${r.id===newId?'<div class="tag">New on the menu</div>':""}<div class="n">${r.name}</div><div class="w">${A.name} + ${B.name} · ${r.prep} min</div></div><div class="done">${cooked.has(r.id)?"✅":""}</div></div>`;
+  }).join("")}</div>`;
+}
+function openRecipe(id){
+  const r=RECIPES.find(x=>x.id===id), A=CH[r.pair[0]], B=CH[r.pair[1]];
+  $("#kitchenbody").innerHTML = `<div class="recipe">
+    <button class="btn ghost small" onclick="renderKitchen('${r.meal}')">← Menu</button>
+    <h3 style="margin-top:12px">${RECIPE_EMOJI[r.id]||"🍽"} ${r.name}</h3>
+    <div style="color:var(--muted);font-size:14px">${r.meal} · ${r.prep} min · serves ${r.serves}</div>
+    <div class="why">${avatarHTML(A,34)} ${avatarHTML(B,34)}<br>${r.why}</div>
+    <h4>You'll need</h4><ul>${r.ingredients.map(i=>`<li>${i}</li>`).join("")}</ul>
+    <h4>Steps — tap each one when it's done</h4><ul class="steps">${r.steps.map((s,i)=>`<li onclick="this.classList.toggle('done')">${s}</li>`).join("")}</ul>
+    <div style="margin-top:16px"><button class="btn sun" onclick="cookIt('${r.id}')">${cooked.has(r.id)?"Cook it again!":"We cooked it!"}</button></div>
+    <div class="grown"><b>For grown-ups:</b> ${r.parent} Check with a grown-up about allergies. For learning and fun — not medical advice.</div>
+  </div>`;
+  $("#kitchenbody").scrollTop=0;
+}
+function cookIt(id){
+  const r=RECIPES.find(x=>x.id===id); cooked.add(id); save();
+  closePanel();
+  if(quest && quest.stage==="cook" && quest.recipe===id){
+    const from=CH[quest.from], to=CH[quest.to]; quest=null; showQuest();
+    sheet(from, `You cooked ${r.name}! ${to.name} and I are together at last. Look — my window is lit up now. ${from.fact}`, [{label:"Hooray!"}], `<div class="badgepop">🍽 Dish cooked · ${from.name} + ${to.name}</div>`);
+    haptic("success");
+  } else {
+    sheet(null, `Yum! ${r.name} is done. ${r.why}`, [{label:"Back to the village"}]);
+  }
+}
+function renderMarket(filter){
+  const tabs=[{id:"all",label:"Everything"}].concat(CHARACTERS.map(c=>({id:c.id,label:c.name})));
+  $("#markettabs").innerHTML = tabs.map(t=>`<button class="tab ${t.id===filter?"on":""}" onclick="renderMarket('${t.id}')">${t.label}</button>`).join("");
+  const list = filter==="all"?FOODS:FOODS.filter(f=>f.has.includes(filter));
+  const intro = filter==="all" ? `<p class="empty" style="padding:6px 0 14px">Tap a buddy's name to see which foods they live in.</p>` : `<p class="empty" style="padding:6px 0 14px">${CH[filter].name} lives in these foods:</p>`;
+  $("#marketbody").innerHTML = intro + `<div class="foods">${list.map(f=>`<div class="food"><span>${f.name}<span class="cat">${f.cat}</span></span><span class="pairchips">${f.has.map(h=>chipHTML(CH[h])).join("")}</span></div>`).join("")}</div>`;
+}
+function renderBadges(){
+  $("#badgebody").innerHTML = `<div class="badges">${BUDDY_KEYS.map(k=>{ const [a,b]=k.split("_"), A=CH[a], B=CH[b], on=discovered.has(k);
+    return `<div class="badge ${on?"":"locked"}">${avatarHTML(A,40)}${avatarHTML(B,40)}<div class="bn">${A.name} + ${B.name}</div><div style="font-size:12px;color:var(--muted)">${on?RULES[k].verdict:"Not found yet"}</div></div>`; }).join("")}</div>
+    <p class="empty">${discovered.size} of ${BUDDY_KEYS.length} buddy pairs found. Talk to a buddy in the village to start a new errand.</p>`;
+}
+
+/* =========================================================================
+   7) PROGRESS, HAPTICS, START
+   ========================================================================= */
+function updateProgress(){ $("#progn").textContent=`${discovered.size} / ${BUDDY_KEYS.length}`; $("#progbar").style.width=(discovered.size/BUDDY_KEYS.length*100)+"%"; }
+function haptic(kind){ try{ if(window.Capacitor&&window.Capacitor.registerPlugin){ const H=window.Capacitor.registerPlugin("Haptics"); kind==="success"?H.notification({type:"SUCCESS"}):H.impact({style:"MEDIUM"}); } else if(navigator.vibrate) navigator.vibrate(kind==="success"?[30,40,30]:20); }catch(e){} }
+
+load(); updateProgress();
+const JERSEYS=["#4E97DD","#D75E8A","#E0A93E","#3BB58C","#8E86E0"];
+$("#jerseys").innerHTML = JERSEYS.map(j=>`<div class="jersey ${j===(jerseyColor||JERSEYS[0])?"on":""}" style="background:${j}" data-j="${j}"></div>`).join("");
+jerseyColor = jerseyColor||JERSEYS[0];
+document.querySelectorAll(".jersey").forEach(el=>el.onclick=()=>{ document.querySelectorAll(".jersey").forEach(x=>x.classList.remove("on")); el.classList.add("on"); jerseyColor=el.dataset.j; });
+$("#startbtn").onclick=()=>{ save(); $("#start").style.display="none"; $("#hint").classList.add("on"); setTimeout(()=>$("#hint").classList.remove("on"), 4000); };
+requestAnimationFrame(frame);
+
+// Self-check in the console: every door must be reachable from the spawn.
+(function(){ const bad=[]; [...Object.values(PLACES), ...HOUSES].forEach(p=>{ if(!findPath(SPAWN.x,SPAWN.y,p.door.x,p.door.y)) bad.push(p.label||p.id); }); if(bad.length) console.warn("Unreachable doors:", bad); else console.log("Village map OK: all doors reachable."); })();
+</script>
+</body>
+</html>
