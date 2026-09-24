@@ -117,8 +117,11 @@
     <div>
       <p class="eyebrow">Ready to try · prototype</p>
       <h2>Vitamin Village</h2>
-      <p>A game for kids aged 7 to 9 about the tiny helpers inside them: which vitamins are buddies, which need space, and what foods bring them along. Works fully offline and collects nothing, by design.</p>
-      <a class="btn primary" href="./vitamin-village/">Open Vitamin Village</a>
+      <p>A game for kids aged 6 and up about the tiny helpers inside them: which vitamins are buddies, which need space, and what foods bring them along. And for grown-ups, the same foods and recipes as a companion app for planning real meals. Works fully offline and collects nothing, by design.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <a class="btn primary" href="./vitamin-village/?mode=game">Open the kids' game</a>
+        <a class="btn" href="./vitamin-village/?mode=app">Open the grown-up app</a>
+      </div>
     </div>
     <div class="how">
       <div><b>On iPhone:</b> open the link in Safari, tap Share, then <em>Add to Home Screen</em>.</div>
@@ -133,9 +136,9 @@
   <div class="grid">
     <article class="card">
       <div class="head"><h3>Vitamin Village</h3><span class="stage prototype">Prototype</span></div>
-      <p>Offline-first kids' app about vitamins: ten characters, 141 foods, 34 recipes, badges to earn. No accounts, no tracking.</p>
+      <p>Offline-first app about vitamins. A kids' game with ten characters and badges to earn, and a grown-up view with 141 foods, 34 recipes, and a build-your-own recipe helper. No accounts, no tracking.</p>
       <div class="chips"><span class="chip">PWA</span><span class="chip">offline</span><span class="chip">no data collected</span></div>
-      <div class="cta"><a href="./vitamin-village/">Open it →</a></div>
+      <div class="cta"><a href="./vitamin-village/?mode=game">Kids' game →</a> &nbsp;·&nbsp; <a href="./vitamin-village/?mode=app">Grown-up app →</a></div>
     </article>
     <article class="card">
       <div class="head"><h3>VCA</h3><span class="stage prototype">Prototype</span></div>
@@ -171,7 +174,7 @@
   <p class="sec-note">Who is behind this site.</p>
   <div class="card" style="margin-bottom:48px">
     <p><b>John Hubert LLC</b> is an independent software studio. We build small, focused applications, with a particular interest in tools for learning and in software that respects the people who use it: our apps work offline where they can, collect nothing they don't need, and never sell data.</p>
-    <p>Current work includes <b>Vitamin Village</b>, a nutrition game for children; <b>VCA</b>, group video calling with a shared workspace; and <b>visual-math</b>, a visualization-first approach to university mathematics. Everything here moves through the same stages, from concept to prototype to testing to live, and we say plainly which stage each project is at.</p>
+    <p>Current work includes <b>Vitamin Village</b>, a nutrition game for children with a companion app for parents; <b>VCA</b>, group video calling with a shared workspace; and <b>visual-math</b>, a visualization-first approach to university mathematics. Everything here moves through the same stages, from concept to prototype to testing to live, and we say plainly which stage each project is at.</p>
     <p>Questions, feedback, or a bug to report: <a href="mailto:support@johnhubert.llc">support@johnhubert.llc</a>. Our <a href="./privacy.html">privacy policy</a> covers this website and every app we publish.</p>
   </div>
 
@@ -181,12 +184,16 @@
   </footer>
 </div>
 <script>
-  // Count clicks on the Vitamin Village buttons as one event, so the dashboard shows
-  // how many visitors went on to open the app. Nothing runs inside the app itself.
-  document.querySelectorAll('a[href="./vitamin-village/"]').forEach(function (a) {
+  // Count clicks on the Vitamin Village doors, one event each, so the dashboard shows
+  // how many visitors opened the kids' game vs the grown-up app. Nothing runs inside the app itself.
+  document.querySelectorAll('a[href^="./vitamin-village/"]').forEach(function (a) {
     a.addEventListener('click', function () {
       if (window.goatcounter && window.goatcounter.count) {
-        window.goatcounter.count({ path: 'event/open-vitamin-village', title: 'Open Vitamin Village', event: true });
+        var app = a.getAttribute('href').indexOf('mode=app') !== -1;
+        window.goatcounter.count({
+          path: app ? 'event/open-grown-up-app' : 'event/open-kids-game',
+          title: app ? 'Open the grown-up app' : 'Open the kids\' game',
+          event: true });
       }
     });
   });
