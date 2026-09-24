@@ -8,7 +8,7 @@
    phone knows to throw away the old copy and fetch your new one. If your edits
    "don't show up" on a phone, this is almost always why.
 */
-const CACHE_NAME = "vitamin-village-v6";
+const CACHE_NAME = "vitamin-village-v7";
 const FILES = [
   "./",
   "./index.html",
@@ -38,6 +38,17 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    caches.match(event.request).then(hit => hit || fetch(event.request))
+    caches.match(event.request).then(hit => {
+      if (hit) return hit;
+      return fetch(event.request).then(res => {
+        // Recipe pictures (img/…) are optional and added over time: cache each
+        // one the first time it loads, so it works offline from then on.
+        if (res.ok && event.request.url.includes("/img/")) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(event.request, copy));
+        }
+        return res;
+      });
+    })
   );
 });

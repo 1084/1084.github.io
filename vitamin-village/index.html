@@ -273,6 +273,46 @@
   .mm-box .u{font-size:11px;color:var(--buddy);font-weight:600;}
   details.mm-steps summary{font-size:12px;color:var(--muted);cursor:pointer;margin-top:4px;}
   details.mm-steps ol{margin:4px 0 0;padding-left:18px;font-size:12px;line-height:1.6;}
+
+  /* ---------- v7: modes, media, browse tiles ---------- */
+  .modepill{display:inline-flex;align-items:center;gap:6px;background:var(--fine-bg);border:1px solid var(--line);
+    border-radius:999px;padding:5px 11px;font-size:11px;font-weight:600;color:var(--muted);margin-top:4px;cursor:pointer;}
+  .modepill b{color:var(--ink);}
+  .rmedia{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .rmedia .remoji{font-size:44px;line-height:1;}
+  .rmedia img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .25s;}
+  .rmedia img.ok{opacity:1;}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+  .tiles.three{grid-template-columns:1fr 1fr 1fr;}
+  .tile{height:78px;border-radius:14px;position:relative;overflow:hidden;cursor:pointer;border:1.5px solid transparent;}
+  .tile.on{border-color:var(--ink);}
+  .tile .te{position:absolute;right:8px;top:6px;font-size:30px;opacity:.9;line-height:1;}
+  .tile .tn{position:absolute;left:10px;bottom:8px;font-size:13px;font-weight:700;}
+  .tile .tc{position:absolute;right:10px;bottom:9px;font-size:11px;font-weight:600;opacity:.7;}
+  .tiles.three .tile{height:68px;} .tiles.three .tile .te{font-size:24px;} .tiles.three .tile .tn{font-size:12px;}
+  .rowscroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none;}
+  .rowscroll::-webkit-scrollbar{display:none;}
+  .rowscroll .mm-chip{flex:none;}
+  .rcard{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:10px;cursor:pointer;box-shadow:var(--shadow);}
+  .rcard .rb{padding:10px 12px;}
+  .rcard .rt{font-size:15px;font-weight:700;}
+  .rcard .rs{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5;}
+  .rcard .ownpic{position:absolute;left:8px;top:8px;background:rgba(255,255,255,.92);border-radius:999px;padding:3px 9px;font-size:10px;font-weight:700;}
+  .hero{position:relative;margin:-20px -18px 0;height:210px;}
+  .hero .rmedia{height:100%;}
+  .hero .remoji{font-size:80px;}
+  .hero .backbtn{position:absolute;left:12px;top:12px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.9);
+    display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;z-index:2;box-shadow:var(--shadow);}
+  .hero .ownpic{position:absolute;right:12px;bottom:10px;background:rgba(255,255,255,.92);border-radius:999px;padding:5px 10px;font-size:11px;font-weight:700;z-index:2;}
+  .seg{display:flex;border:1.5px solid var(--line);border-radius:999px;padding:3px;margin:12px 0;background:#fff;}
+  .seg button{flex:1;background:none;border-radius:999px;padding:7px;font-size:12px;font-weight:600;color:var(--muted);}
+  .seg button.on{background:var(--ink);color:#fff;}
+  .segpane{display:none;} .segpane.on{display:block;}
+  .foodrow{cursor:pointer;flex-wrap:wrap;}
+  .foodrow .fe{font-size:26px;width:34px;text-align:center;flex:none;line-height:1;}
+  .foodrow .fx{flex-basis:100%;font-size:12px;color:var(--muted);padding:6px 0 0 44px;line-height:1.6;}
+  .foodrow .fx a{color:var(--buddy);font-weight:600;cursor:pointer;}
+  .photo-note{font-size:11px;color:#8b8a83;text-align:center;margin-top:6px;}
 </style>
 </head>
 
@@ -288,7 +328,8 @@
 
   <!-- ============ SCREEN: VILLAGE ============ -->
   <section class="screen active" id="s-village">
-    <h1>Vitamin Village <span style="font-size:11px;font-weight:600;color:var(--muted);vertical-align:middle;margin-left:6px">v6</span></h1>
+    <h1>Vitamin Village <span style="font-size:11px;font-weight:600;color:var(--muted);vertical-align:middle;margin-left:6px">v7</span></h1>
+    <div id="mode-pill-village" style="margin:-2px 0 10px"></div>
     <div class="progress">
       <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;">
         <span>Buddies discovered</span><span id="prog-count">0 / 10</span>
@@ -309,23 +350,28 @@
 
   <!-- ============ SCREEN: FOOD FINDER ============ -->
   <section class="screen" id="s-foods">
-    <h1>Food Finder</h1>
-    <p class="muted" style="margin-top:-4px">Where do the helpers hide? Search a food.</p>
+    <h1>Foods</h1>
+    <p class="muted" style="margin-top:-4px">Where do the helpers hide?</p>
     <input class="search" id="food-search" placeholder="Search foods, e.g. spinach">
+    <div id="food-tiles"></div>
     <div id="food-list"></div>
   </section>
 
   <!-- ============ SCREEN: RECIPES (list) ============ -->
   <section class="screen" id="s-recipes">
-    <h1>Recipe Box</h1>
-    <p class="muted" style="margin-top:-4px">Meals that put buddy nutrients together.</p>
+    <h1>Recipes</h1>
+    <p class="muted" style="margin-top:-4px"><span id="recipe-count"></span> buddy-team meals</p>
+    <div id="mode-pill-recipes"></div>
+    <input class="search" id="recipe-search" placeholder="Search recipes or foods" style="margin-top:10px">
+    <div id="recipe-tiles"></div>
+    <div id="recipe-teams"></div>
     <div id="recipe-list"></div>
   </section>
 
   <!-- ============ SCREEN: RECIPE DETAIL ============ -->
   <section class="screen" id="s-recipe">
-    <button class="backlink" onclick="go('recipes')">‹ All recipes</button>
     <div id="recipe-detail"></div>
+    <input type="file" id="photo-in" accept="image/*" capture="environment" hidden>
   </section>
 
   <!-- ============ SCREEN: REWARD / COLLECTION ============ -->
@@ -405,13 +451,7 @@
   </div>
 
   <!-- ============ BOTTOM NAV ============ -->
-  <nav id="nav">
-    <button data-go="village" class="on"><span class="ic">●</span>Village</button>
-    <button data-go="foods"><span class="ic">◆</span>Foods</button>
-    <button data-go="recipes"><span class="ic">▲</span>Recipes</button>
-    <button data-go="combo"><span class="ic">⬡</span>Mix</button>
-    <button data-go="reward"><span class="ic">★</span>Badges</button>
-  </nav>
+  <nav id="nav"></nav>
 </div>
 
 <script>
@@ -919,18 +959,44 @@ function ruleKey(a, b){ return [a,b].sort().join("_"); }   // the sorted lookup 
 /* =========================================================================
    5) SCREEN NAVIGATION
    ========================================================================= */
+/* ---- Two modes, one app -------------------------------------------------
+   "game" = the kids' game (Village first, tutorial, playful).
+   "app"  = the grown-up app (Recipes first, no tutorial).
+   Same data, same screens — only the order, landing tab and framing differ.
+   Open with ?mode=app or ?mode=game to force one; the choice is remembered. */
+let mode = "game";
+try{ mode = new URLSearchParams(location.search).get("mode") || localStorage.getItem("vv-mode") || "game"; }catch(e){}
+if(mode !== "app") mode = "game";
+const TABS = {
+  village:{ic:"●", label:"Village"}, foods:{ic:"◆", label:"Foods"}, recipes:{ic:"▲", label:"Recipes"},
+  combo:{ic:"⬡", label:"Mix"}, reward:{ic:"★", label:"Badges"} };
+const ORDER = { game:["village","foods","recipes","combo","reward"], app:["recipes","foods","combo","village","reward"] };
+function renderNav(active){
+  $('#nav').innerHTML = ORDER[mode].map(k =>
+    `<button data-go="${k}" class="${k===active?'on':''}"><span class="ic">${TABS[k].ic}</span>${TABS[k].label}</button>`).join('');
+  document.querySelectorAll('#nav button').forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
+}
+function setMode(m){
+  mode = m; try{ if(!testMode) localStorage.setItem("vv-mode", m); }catch(e){}
+  renderModePills(); go(ORDER[m][0]);
+}
+function renderModePills(){
+  const pill = mode === "app"
+    ? `<span class="modepill" onclick="setMode('game')">Grown-up view · <b>switch to kids' game</b></span>`
+    : `<span class="modepill" onclick="setMode('app')">Kids' game · <b>switch to grown-up view</b></span>`;
+  $('#mode-pill-village').innerHTML = pill; $('#mode-pill-recipes').innerHTML = pill;
+}
+
 function go(name){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $('#s-' + name).classList.add('active');
-  document.querySelectorAll('#nav button').forEach(b =>
-    b.classList.toggle('on', b.dataset.go === name));
+  renderNav(name === 'recipe' ? 'recipes' : name);
   $('#phone').scrollTop = 0;
-  if(name === 'reward') renderReward();
-  if(name === 'foods')  renderFoods('');
-  if(name === 'combo')  renderComboPairs();
+  if(name === 'reward')  renderReward();
+  if(name === 'foods')   renderFoods();
+  if(name === 'recipes') renderRecipeList();
+  if(name === 'combo')   renderComboPairs();
 }
-document.querySelectorAll('#nav button').forEach(b =>
-  b.addEventListener('click', () => go(b.dataset.go)));
 
 /* =========================================================================
    6) VILLAGE + the tap-two friendship check
@@ -1024,58 +1090,212 @@ function renderReward(){
      : `<p class="muted">Find all ${total} buddy pairs in the village to fill your badge book. ${done} down, ${total-done} to go!</p>`}
     <div class="badgegrid">${badges}</div>
     <div style="height:18px"></div>
-    <button class="btn light" onclick="resetProgress()" style="font-size:14px">Start over (for grown-ups)</button>`;
+    <button class="btn light" onclick="resetProgress()" style="font-size:14px">Start over</button>`;
 }
 
 /* =========================================================================
    8) FOOD FINDER
    ========================================================================= */
-function renderFoods(query){
-  const q = query.trim().toLowerCase();
-  const rows = FOODS.filter(f => f.name.toLowerCase().includes(q) || f.cat.toLowerCase().includes(q));
-  $('#food-list').innerHTML = rows.length ? rows.map(f => `
-    <div class="foodrow">
-      <div><div class="fn">${f.name}</div><div class="fc">${f.cat}</div></div>
-      <div class="dots">${f.has.map(id =>
-        `<div class="dot" style="background:${CH[id].bg};color:${CH[id].ink}">${CH[id].sym}</div>`).join('')}</div>
-    </div>`).join('')
-    : `<p class="muted center">No foods found. Try another word!</p>`;
+/* Every food gets a picture (emoji) and, where a 7-year-old might not know
+   it, a plain one-line description. Both are just data — edit freely.     */
+const FOOD_EMOJI = {
+ "Avocado":"🥑","Asparagus":"🌿","Kale":"🥬","Spinach":"🥬","Broccoli":"🥦","Cabbage":"🥬","Cucumber":"🥒","Celery":"🌿",
+ "Zucchini":"🥒","Eggplant":"🍆","Bell peppers":"🫑","Carrots":"🥕","Beets":"🟣","Radishes":"🔴","Sweet potato":"🍠",
+ "Pumpkin":"🎃","Butternut squash":"🎃","Tomatoes":"🍅","Lettuce":"🥬","Arugula":"🌿","Green beans":"🫛","Peas":"🫛",
+ "Brussels sprouts":"🥬","Okra":"🌿","Apples":"🍎","Pears":"🍐","Peaches":"🍑","Apricots":"🍑","Cherries":"🍒","Plums":"🟣",
+ "Mango":"🥭","Papaya":"🍈","Pineapple":"🍍","Watermelon":"🍉","Cantaloupe":"🍈","Honeydew":"🍈","Strawberries":"🍓",
+ "Blueberries":"🫐","Raspberries":"🍓","Blackberries":"🫐","Lemon":"🍋","Lime":"🍋","Grapefruit":"🍊","Oranges":"🍊",
+ "Bananas":"🍌","Figs":"🟣","Grapes":"🍇","Pomegranate":"🔴","Almonds":"🌰","Brazil nuts":"🌰","Chia seeds":"🌱",
+ "Flax seeds":"🌱","Hemp seeds":"🌱","Sesame seeds":"🌱","Pumpkin seeds":"🎃","Sunflower seeds":"🌻","Olive oil":"🫒",
+ "Seaweed":"🌿","Kelp":"🌿","Parsley":"🌿","Cilantro":"🌿","Basil":"🌿","Oregano":"🌿","Thyme":"🌿","Rosemary":"🌿",
+ "Ginger root":"🫚","Turmeric":"🫚","Garlic":"🧄","Onions":"🧅","Mushrooms":"🍄","Leeks":"🧅","Turnips":"🥔","Parsnips":"🥕",
+ "Swiss chard":"🥬","Collard greens":"🥬","Watercress":"🌿","Endive":"🥬","Brown rice":"🍚","White rice":"🍚","Oats":"🥣",
+ "Steel cut oats":"🥣","Barley":"🌾","Farro":"🌾","Quinoa":"🌾","Bulgur":"🌾","Couscous":"🌾","Whole wheat":"🌾",
+ "Whole grain bread":"🍞","Bagels":"🥯","Whole grain pasta":"🍝","Noodles":"🍜","Corn":"🌽","Sweet corn":"🌽",
+ "White potatoes":"🥔","Red potatoes":"🥔","Chickpeas":"🫘","Lentils":"🫘","Black beans":"🫘","Kidney beans":"🫘",
+ "Pinto beans":"🫘","Navy beans":"🫘","Cashews":"🌰","Pistachios":"🌰","Walnuts":"🌰","Pecans":"🌰","Tahini":"🫙","Eggs":"🥚",
+ "Greek yogurt":"🥣","Plain yogurt":"🥣","Cottage cheese":"🧀","Ricotta":"🧀","Goat cheese":"🧀","Feta cheese":"🧀",
+ "Milk":"🥛","Almond milk":"🥛","Soy milk":"🥛","Oat milk":"🥛","Butter":"🧈","Ghee":"🧈","Salmon":"🐟","Tuna":"🐟",
+ "Sardines":"🐟","Mackerel":"🐟","Chicken":"🍗","Turkey":"🦃","Lean beef":"🥩","Lamb":"🥩","Avocado oil":"🫒","Canola oil":"🫒",
+ "Dark chocolate":"🍫","Cocoa":"🍫","Fruit juice":"🧃","Smoothies":"🥤","Granola":"🥣","Muesli":"🥣","Dried apricots":"🍑",
+ "Raisins":"🍇","Dried figs":"🟣","Dates":"🟤","Coconut milk":"🥥","Cream":"🥛" };
+const FOOD_DESC = {
+ "Asparagus":"Long green spears with pointy tips","Kale":"A curly dark-green leaf","Spinach":"Soft green leaves that shrink when cooked",
+ "Cabbage":"A big round ball of crunchy leaves","Zucchini":"A long green vegetable, like a soft cucumber","Eggplant":"Shiny and purple, soft when cooked",
+ "Beets":"A round root that stains everything purple-red","Radishes":"Small, crunchy and a little peppery","Butternut squash":"A long orange squash, sweet when roasted",
+ "Arugula":"Peppery little leaves","Okra":"Green finger-shaped pods","Brussels sprouts":"Tiny cabbages the size of marbles",
+ "Apricots":"A small orange fruit like a mini peach","Plums":"A small purple fruit, juicy inside","Papaya":"An orange tropical fruit with black seeds",
+ "Cantaloupe":"An orange melon","Honeydew":"A pale green melon","Blackberries":"Dark purple berries made of tiny bubbles",
+ "Raspberries":"Red berries with a hollow middle","Grapefruit":"A big, tangy pink citrus","Figs":"A soft purple fruit that's pink inside",
+ "Pomegranate":"A red fruit full of juicy ruby seeds","Brazil nuts":"Big, creamy nuts","Chia seeds":"Tiny black seeds that go jelly in liquid",
+ "Flax seeds":"Tiny brown seeds, often ground up","Hemp seeds":"Soft, nutty little seeds","Sesame seeds":"The tiny seeds on top of a bun",
+ "Pumpkin seeds":"Little green seeds from inside a pumpkin","Sunflower seeds":"Grey-striped seeds from a sunflower","Seaweed":"Sea leaves, often dried and crispy",
+ "Kelp":"A big brown seaweed","Parsley":"A leafy green herb for flavour","Cilantro":"A leafy herb with a fresh, zingy taste","Basil":"A sweet-smelling leafy herb",
+ "Oregano":"A small-leaved herb, great on pizza","Thyme":"A tiny-leaved herb","Rosemary":"A spiky, piney herb","Ginger root":"A knobbly root with a zingy taste",
+ "Turmeric":"A golden-yellow spice root","Leeks":"Like a long, mild onion","Turnips":"A round white-and-purple root","Parsnips":"Like a pale, sweet carrot",
+ "Swiss chard":"Big green leaves with colourful stems","Collard greens":"Big, flat dark-green leaves","Watercress":"Small peppery leaves that grow in water",
+ "Endive":"Pale crunchy leaves, a little bitter","Barley":"A chewy grain, great in soups","Farro":"A chewy, nutty grain","Quinoa":"Tiny round grains that pop when cooked",
+ "Bulgur":"Cracked wheat that cooks fast","Couscous":"Tiny pasta balls that fluff up","Steel cut oats":"Chunky oats that take longer to cook",
+ "Chickpeas":"Round beige beans, great for hummus","Lentils":"Tiny discs that go soft in soup","Kidney beans":"Big red beans","Pinto beans":"Speckled beans",
+ "Navy beans":"Small white beans","Tahini":"A creamy paste made from sesame seeds","Cottage cheese":"Soft, lumpy white cheese","Ricotta":"Soft, creamy white cheese",
+ "Goat cheese":"Tangy soft cheese","Feta cheese":"Salty, crumbly white cheese","Ghee":"Butter with the milky bits taken out","Sardines":"Tiny fish, usually from a tin",
+ "Mackerel":"An oily silver fish","Granola":"Crunchy toasted oat clusters","Muesli":"Oats mixed with nuts and dried fruit","Dried apricots":"Chewy dried orange fruit",
+ "Dried figs":"Chewy dried figs","Dates":"Sweet, sticky brown fruit","Coconut milk":"Creamy milk made from coconut" };
+const FAMILY_EMOJI = { "Vegetable":"🥕","Fruit":"🍎","Grain":"🌾","Dairy":"🧀","Leafy green":"🥬","Herb":"🌿","Legume":"🫘","Seed":"🌱",
+  "Nut":"🌰","Berry":"🍓","Citrus":"🍊","Fish":"🐟","Meat":"🥩","Dried fruit":"🍇","Oil":"🫒","Sea vegetable":"🌿","Treat":"🍫","Drink":"🧃","Protein":"🥚" };
+const FAMILY_BG = { "Vegetable":"#EAF3DE","Fruit":"#FBEAF0","Grain":"#FAEEDA","Dairy":"#E6F1FB","Leafy green":"#E1F5EE","Herb":"#E1F5EE","Legume":"#FAECE7",
+  "Seed":"#FBF3D9","Nut":"#F4EBE0","Berry":"#FBEAF0","Citrus":"#FDEBD9","Fish":"#E6F1FB","Meat":"#FAECE7","Dried fruit":"#F4EBE0","Oil":"#FBF3D9",
+  "Sea vegetable":"#E1F5EE","Treat":"#F4EBE0","Drink":"#FDEBD9","Protein":"#FAEEDA" };
+let foodFamily = null, foodOpen = null;
+function fe(name){ return FOOD_EMOJI[name] || "🍽"; }
+function recipesUsing(name){ return RECIPES.filter(r => hasFood(r.ingredients.join(' ') + ' ' + r.shopping.join(' '), name)); }
+function renderFoods(){
+  const q = $('#food-search').value.trim().toLowerCase();
+  const counts = {}; FOODS.forEach(f => counts[f.cat] = (counts[f.cat]||0)+1);
+  const fams = Object.keys(counts).sort((a,b) => counts[b]-counts[a]);
+  $('#food-tiles').innerHTML = q ? "" : `<div class="mm-label">BROWSE BY FAMILY</div><div class="tiles three">${fams.map(c =>
+    `<div class="tile ${foodFamily===c?'on':''}" style="background:${FAMILY_BG[c]||'#F1EFE8'}" onclick="foodFamily=(foodFamily==='${c}'?null:'${c}');foodOpen=null;renderFoods()">
+      <div class="te">${FAMILY_EMOJI[c]||'🍽'}</div><div class="tn">${c}</div><div class="tc">${counts[c]}</div></div>`).join('')}</div>`;
+  let rows = FOODS;
+  if(q) rows = rows.filter(f => f.name.toLowerCase().includes(q) || f.cat.toLowerCase().includes(q) || (FOOD_DESC[f.name]||"").toLowerCase().includes(q));
+  else if(foodFamily) rows = rows.filter(f => f.cat === foodFamily);
+  rows = rows.slice().sort((a,b) => a.name.localeCompare(b.name));
+  $('#food-list').innerHTML = `<div class="mm-label">${q ? 'RESULTS' : (foodFamily ? foodFamily.toUpperCase() : 'ALL FOODS')} <span style="font-weight:500">· ${rows.length}</span></div>` +
+    (rows.length ? rows.map(f => {
+      const open = foodOpen === f.name, recs = open ? recipesUsing(f.name) : [];
+      return `<div class="foodrow" onclick="foodOpen=(foodOpen==='${f.name.replace(/'/g,"\\'")}'?null:'${f.name.replace(/'/g,"\\'")}');renderFoods()">
+        <div class="fe">${fe(f.name)}</div>
+        <div style="flex:1;min-width:0"><div class="fn">${f.name}</div><div class="fc">${FOOD_DESC[f.name] ? FOOD_DESC[f.name] + ' · ' : ''}${f.cat}</div></div>
+        <div class="dots">${f.has.map(id => `<div class="dot" style="background:${CH[id].bg};color:${CH[id].ink}">${CH[id].sym}</div>`).join('')}</div>
+        ${open ? `<div class="fx"><b>Helpers inside:</b> ${f.has.map(id => CH[id].name + ' (' + CH[id].nutrient + ')').join(', ')}.<br>
+          ${recs.length ? `<b>Recipes:</b> ${recs.map(r => `<a onclick="event.stopPropagation();openRecipe('${r.id}')">${r.name}</a>`).join(' · ')}` : `<span>Not in a recipe yet — try it in Mix &amp; Match.</span>`}</div>` : ''}
+      </div>`; }).join('') : `<p class="muted center">No foods found. Try another word!</p>`);
 }
-$('#food-search').addEventListener('input', e => renderFoods(e.target.value));
+$('#food-search').addEventListener('input', () => { foodFamily = null; foodOpen = null; renderFoods(); });
 
 /* =========================================================================
    9) RECIPES
    ========================================================================= */
-function renderRecipeList(){
-  $('#recipe-list').innerHTML = RECIPES.map(r => {
-    const A = CH[r.pair[0]], B = CH[r.pair[1]];
-    return `<div class="recipecard" onclick="openRecipe('${r.id}')">
-      <div class="rt">${r.name}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span class="pairbadge">${chip(A)}${chip(B)} ${A.name} + ${B.name}</span>
-        <span class="meta">${r.meal} · ${r.prep} min</span>
-      </div>
-    </div>`;
-  }).join('');
+/* Appetising one-liners for the menu. Edit freely. */
+const RECIPE_TAG = {
+ r01:"Fluffy eggs with melty cheese", r02:"Crunchy toast boats with a lemony splash", r03:"Silky pasta with flaky salmon and peas",
+ r04:"A rainbow rolled up in a wrap", r05:"Sweet berries on a bed of greens", r06:"A cosy red bowl to warm you up",
+ r07:"Flaky salmon over fluffy rice", r08:"Creamy, cosy and golden", r09:"Creamy avocado and tuna, lunchbox-ready",
+ r10:"Cool yogurt with a crunchy top", r11:"Melty, crispy triangles", r12:"Sweet, creamy and sippable",
+ r13:"Crunchy sticks with a creamy dip", r14:"A warm, hearty bowl of orange", r15:"Orange toast with a crunchy crown",
+ r16:"Soft, sweet and spoonable", r17:"Fluffy grains with sweet apricot bits", r18:"A hearty pan of beef and carrots",
+ r19:"Little egg cups, perfect for small hands", r20:"Dinner on a stick", r21:"Dippy eggs with buttery toast soldiers",
+ r22:"Little green trees under a cheese blanket", r23:"Crisp green wraps with creamy cheese", r24:"Cool, crunchy and salty-sweet",
+ r25:"Chocolatey bites you roll yourself", r26:"Creamy, mild and cosy", r27:"Slurpy noodles with a sesame sprinkle",
+ r28:"Colourful layers in a cup", r29:"Sunshine in a bowl", r30:"Little trees with a seedy dip",
+ r31:"Warm oats piled with berries", r32:"Sweet figs stirred into creamy oats", r33:"A sunny orange start", r34:"A folded egg full of goodness" };
+const MEAL_BG = { Breakfast:"linear-gradient(135deg,#FAEEDA,#F3D9A6)", Lunch:"linear-gradient(135deg,#EAF3DE,#C9E3A9)",
+                  Dinner:"linear-gradient(135deg,#FAECE7,#F1C6B4)", Snack:"linear-gradient(135deg,#FBEAF0,#F0C4D3)" };
+const MEAL_EMOJI = { Breakfast:"🍳", Lunch:"🌯", Dinner:"🍲", Snack:"🍓" };
+
+/* ---- Pictures: the family's own photo > a bundled img/<id>.webp > the dish emoji.
+   Bundled pictures are optional: drop img/r01.webp … img/r34.webp next to
+   index.html and they appear; a missing file just shows the emoji.        */
+const PHOTOS = {};   // recipeId -> data URL, loaded from this device's storage
+function recipeMedia(r, h){
+  const own = PHOTOS[r.id];
+  return `<div class="rmedia" style="height:${h}px;background:${MEAL_BG[r.meal]}">
+    <div class="remoji">${RECIPE_EMOJI[r.id]||'🍽'}</div>
+    ${own ? `<img class="ok" src="${own}" alt="">` : `<img src="img/${r.id}.webp" alt="" onload="this.classList.add('ok')" onerror="this.remove()">`}
+    ${own ? `<span class="ownpic">📷 We made it!</span>` : ''}
+  </div>`;
 }
+
+let recipeMeal = null, recipePair = null;
+function renderRecipeList(){
+  $('#recipe-count').textContent = RECIPES.length;
+  const q = $('#recipe-search').value.trim().toLowerCase();
+  const counts = {}; RECIPES.forEach(r => counts[r.meal] = (counts[r.meal]||0)+1);
+  $('#recipe-tiles').innerHTML = q ? "" : `<div class="mm-label">BROWSE BY MEAL</div><div class="tiles">${["Breakfast","Lunch","Dinner","Snack"].map(m =>
+    `<div class="tile ${recipeMeal===m?'on':''}" style="background:${MEAL_BG[m]}" onclick="recipeMeal=(recipeMeal==='${m}'?null:'${m}');renderRecipeList()">
+      <div class="te">${MEAL_EMOJI[m]}</div><div class="tn">${m==='Snack'?'Snacks':m}</div><div class="tc">${counts[m]||0}</div></div>`).join('')}</div>`;
+  $('#recipe-teams').innerHTML = q ? "" : `<div class="mm-label">BY BUDDY TEAM</div><div class="rowscroll">${BUDDY_KEYS.map(k => { const [x,y]=k.split('_');
+    return `<button class="mm-chip ${recipePair===k?'on':''}" onclick="recipePair=(recipePair==='${k}'?null:'${k}');renderRecipeList()">${CH[x].name} + ${CH[y].name}</button>`; }).join('')}</div>`;
+  let rows = RECIPES;
+  if(q) rows = rows.filter(r => (r.name + ' ' + (RECIPE_TAG[r.id]||'') + ' ' + r.ingredients.join(' ') + ' ' + r.shopping.join(' ')).toLowerCase().includes(q));
+  else { if(recipeMeal) rows = rows.filter(r => r.meal === recipeMeal); if(recipePair) rows = rows.filter(r => ruleKey(r.pair[0], r.pair[1]) === recipePair); }
+  const label = q ? 'RESULTS' : [recipeMeal ? recipeMeal.toUpperCase() : null, recipePair ? (CH[recipePair.split('_')[0]].name + ' + ' + CH[recipePair.split('_')[1]].name).toUpperCase() : null].filter(Boolean).join(' · ') || 'ALL RECIPES';
+  $('#recipe-list').innerHTML = `<div class="mm-label">${label} <span style="font-weight:500">· ${rows.length}</span></div>` +
+    (rows.length ? rows.map(r => { const A = CH[r.pair[0]], B = CH[r.pair[1]];
+      return `<div class="rcard" onclick="openRecipe('${r.id}')">
+        <div style="position:relative">${recipeMedia(r, 120)}</div>
+        <div class="rb"><div class="rt">${r.name}</div>
+          <div class="rs">${RECIPE_TAG[r.id]||''} · ${A.name} + ${B.name} · ${r.prep} min</div></div>
+      </div>`; }).join('') : `<p class="muted center">Nothing here yet — try another search.</p>`);
+}
+$('#recipe-search').addEventListener('input', () => { recipeMeal = null; recipePair = null; renderRecipeList(); });
+let openId = null;
 function openRecipe(id){
+  openId = id;
   const r = RECIPES.find(x => x.id === id);
   const A = CH[r.pair[0]], B = CH[r.pair[1]];
   $('#recipe-detail').innerHTML = `
-    <h1>${r.name}</h1>
-    <div class="pairbadge" style="margin-bottom:12px">${chip(A)}${chip(B)} ${A.name} + ${B.name}</div>
-    <p>${r.why}</p>
-    <div class="meta" style="margin-bottom:16px">${r.meal} · ${r.prep} min · serves ${r.serves}</div>
-    <h2>Ingredients</h2>
-    <div style="margin-bottom:18px">${r.ingredients.map(checkRow).join('')}</div>
-    <h2>Steps</h2>
-    <div style="margin-bottom:18px">${r.steps.map((s,i)=>checkRow((i+1)+'. '+s)).join('')}</div>
-    <h2>Shopping list</h2>
-    <div style="margin-bottom:18px">${r.shopping.map(checkRow).join('')}</div>
-    <div class="expander"><b>For grown-ups:</b> ${r.parent}</div>
+    <div class="hero">${recipeMedia(r, 210)}<div class="backbtn" onclick="go('recipes')">‹</div></div>
+    <h1 style="margin-top:14px;font-size:22px;line-height:1.2">${r.name}</h1>
+    <div class="muted" style="font-size:13px;margin:4px 0 10px">${RECIPE_TAG[r.id]||''}</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+      <span class="pairbadge">${chip(A)}${chip(B)} ${A.name} + ${B.name}</span>
+      <span class="meta">${r.meal} · ${r.prep} min · serves ${r.serves}</span></div>
+    <p style="font-size:14px;margin:8px 0 0">${r.why}</p>
+    <div class="seg">
+      <button class="on" onclick="segTo(this,'ingredients')">Ingredients</button>
+      <button onclick="segTo(this,'steps')">Steps</button>
+      <button onclick="segTo(this,'shopping')">Shopping</button></div>
+    <div class="segpane on" id="pane-ingredients">${r.ingredients.map(checkRow).join('')}</div>
+    <div class="segpane" id="pane-steps">${r.steps.map((s,i)=>checkRow((i+1)+'. '+s)).join('')}</div>
+    <div class="segpane" id="pane-shopping">${r.shopping.map(checkRow).join('')}</div>
+    <div class="expander" style="margin-top:14px"><b>For grown-ups:</b> ${r.parent}</div>
+    <div style="height:14px"></div>
+    <button class="btn" onclick="$('#photo-in').click()">📷 &nbsp;${PHOTOS[r.id] ? 'Change our photo' : 'We made it! Add our photo'}</button>
+    ${PHOTOS[r.id] ? `<button class="btn light" style="margin-top:8px" onclick="removePhoto('${r.id}')">Remove our photo</button>` : ''}
+    <div class="photo-note">Photos stay on this device only — they're never sent anywhere.</div>
     <p class="meta" style="margin-top:14px">For learning and fun — not medical advice. Check with a grown-up about allergies.</p>`;
   go('recipe');
 }
+function segTo(btn, pane){
+  btn.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
+  document.querySelectorAll('.segpane').forEach(p => p.classList.toggle('on', p.id === 'pane-' + pane));
+}
+
+/* ---- The family's own photos: stored in the browser's IndexedDB on this
+   device. Shrunk before saving so 34 photos stay small. Never uploaded.  */
+function photoDB(){ return new Promise((res, rej) => {
+  if(!window.indexedDB) return rej(new Error("no idb"));
+  const q = indexedDB.open("vv-photos", 1);
+  q.onupgradeneeded = e => e.target.result.createObjectStore("photos");
+  q.onsuccess = e => res(e.target.result); q.onerror = () => rej(q.error); }); }
+async function loadPhotos(){
+  try{ const db = await photoDB(); const req = db.transaction("photos").objectStore("photos").openCursor();
+    req.onsuccess = e => { const c = e.target.result; if(c){ PHOTOS[c.key] = c.value; c.continue(); } else if($('#s-recipes').classList.contains('active')) renderRecipeList(); };
+  }catch(e){}
+}
+async function storePhoto(id, dataURL){
+  PHOTOS[id] = dataURL;
+  if(testMode) return;
+  try{ const db = await photoDB(); const tx = db.transaction("photos", "readwrite"); tx.objectStore("photos").put(dataURL, id); }catch(e){}
+}
+async function removePhoto(id){
+  delete PHOTOS[id];
+  try{ if(!testMode){ const db = await photoDB(); db.transaction("photos", "readwrite").objectStore("photos").delete(id); } }catch(e){}
+  openRecipe(id);
+}
+$('#photo-in').addEventListener('change', e => {
+  const file = e.target.files && e.target.files[0]; if(!file || !openId) return;
+  const img = new Image(); const url = URL.createObjectURL(file);
+  img.onload = () => {
+    const MAX = 900, s = Math.min(1, MAX / Math.max(img.width, img.height));
+    const cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    URL.revokeObjectURL(url);
+    storePhoto(openId, cv.toDataURL('image/jpeg', 0.72)).then(() => openRecipe(openId));
+  };
+  img.src = url; e.target.value = "";
+});
 function checkRow(text){
   return `<div class="check" onclick="this.classList.toggle('done')">
     <span class="box">✓</span><span class="txt">${text}</span></div>`;
@@ -1705,10 +1925,12 @@ if (TEST) testMode = true;
 
 if (!testMode) loadState();          // restore progress + saved ideas from this device
 renderGrid();
-renderRecipeList();
 updateProgress();
 renderOnboard();
-try{ if(!testMode && localStorage.getItem(STORE.onboarded) === "1") $('#onboard').style.display = 'none'; }catch(e){}
+renderModePills();
+loadPhotos();
+go(ORDER[mode][0]);                  // land on Village (game) or Recipes (app)
+try{ if(mode === "app" || (!testMode && localStorage.getItem(STORE.onboarded) === "1")) $('#onboard').style.display = 'none'; }catch(e){}
 
 if (TEST === "celebrate") {
   document.getElementById("onboard").style.display = "none";
