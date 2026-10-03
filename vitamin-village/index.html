@@ -411,8 +411,8 @@
     <p class="muted" style="margin-top:-4px"><span id="recipe-count"></span> buddy-team meals</p>
     <div id="mode-pill-recipes"></div>
     <input class="search" id="recipe-search" placeholder="Search recipes or foods" style="margin-top:10px">
-    <div id="cookbook-cover"></div>
     <div id="recipe-tiles"></div>
+    <div id="cookbook-cover"></div>
     <div id="recipe-teams"></div>
     <div id="recipe-list"></div>
   </section>
@@ -430,15 +430,7 @@
     <h2 style="margin:0">Add a sticker</h2><p class="muted" style="font-size:12px;margin:2px 0 0">Tap one to stick it on. Tap a sticker on the page to peel it off.</p>
     <div class="stkgrid" id="stk-grid"></div>
     <button class="btn light" onclick="closeSheet()">Done</button></div></div>
-  <div class="sheet" id="sheet-cover" onclick="if(event.target===this)closeSheet()"><div class="inner">
-    <h2 style="margin:0">Our cookbook cover</h2>
-    <div class="mm-label">NAME</div>
-    <input class="search" id="cover-name" placeholder="The Smith Family Cookbook" maxlength="40" oninput="book.title=this.value;saveBook();renderCover()">
-    <div class="mm-label">COLOUR</div>
-    <div class="swatches" id="cover-swatches"></div>
-    <div class="mm-label">COVER STICKER</div>
-    <div class="stkgrid" id="cover-stk"></div>
-    <button class="btn light" onclick="closeSheet()">Done</button></div></div>
+
 
   <!-- ============ SCREEN: RECIPE DETAIL ============ -->
   <section class="screen" id="s-recipe">
@@ -1298,7 +1290,7 @@ function renderCover(){
   const n = pagesWithPhoto(), total = RECIPES.length;
   const recent = RECIPES.filter(r => PHOTOS[r.id]).slice(-4);
   const row = (recent.length ? recent.map(r => `<span><img src="${PHOTOS[r.id]}" alt=""></span>`) : ["🍳","🌯","🥗","🍲"].map(e => `<span>${e}</span>`)).join('');
-  el.innerHTML = `<div class="mm-label" style="margin-top:12px">OUR COOKBOOK</div>
+  el.innerHTML = `<div class="mm-label" style="margin-top:4px">OUR COOKBOOK</div>
     <div class="cover" style="background:linear-gradient(160deg,${bg1},${bg2});color:${ink}" onclick="openBook(null)">
       <div class="stk" style="right:14px;top:10px;transform:rotate(12deg)">${book.coverStk||''}</div>
       <div class="cv-the">THE</div><div class="cv-title">${esc2(coverTitle())}</div>
@@ -1306,12 +1298,18 @@ function renderCover(){
       <div class="cv-prog">${n} of ${total} pages have your photo</div>
       <div class="cv-bar"><i style="width:${total?n/total*100:0}%"></i></div>
     </div>
-    <div class="mm-btnrow" style="margin-top:10px">
-      <button class="btn" onclick="openBook(null)">Open the book</button>
-      <button class="btn light" onclick="openCoverEditor()">Decorate cover</button>
-    </div>`;
+    <div class="swipehint" style="margin-top:8px">tap the book to open it</div>`;
 }
 function esc2(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+/* Grown-up view speaks in nutrient names; the kids' game keeps the buddies. */
+function pairLabel(x, y){ return mode === 'app' ? `${CH[x].nutrient} + ${CH[y].nutrient}` : `${CH[x].name} + ${CH[y].name}`; }
+function pairLabelKey(k){ const [x,y] = k.split('_'); return pairLabel(x,y); }
+function chapterLabel(){
+  if(!bookChapter) return 'ALL RECIPES';
+  if(bookChapter.startsWith('pair:')) return pairLabelKey(bookChapter.slice(5)).toUpperCase();
+  return bookChapter === 'Snack' ? 'SNACKS' : bookChapter.toUpperCase();
+}
 
 let recipeMeal = null, recipePair = null;
 function renderRecipeList(){
@@ -1323,18 +1321,19 @@ function renderRecipeList(){
   $('#recipe-tiles').innerHTML = q ? "" : `<div class="mm-label">BROWSE BY MEAL <span style="font-weight:500">· tap to open that chapter</span></div><div class="tiles">${["Breakfast","Lunch","Dinner","Snack"].map(m =>
     `<div class="tile ${recipeMeal===m?'on':''}" style="background:${MEAL_BG[m]}" onclick="openBook('${m}')">
       <div class="te">${MEAL_EMOJI[m]}</div><div class="tn">${m==='Snack'?'Snacks':m}</div><div class="tc">${counts[m]||0}</div></div>`).join('')}</div>`;
-  $('#recipe-teams').innerHTML = q ? "" : `<div class="mm-label">BY BUDDY TEAM</div><div class="rowscroll">${BUDDY_KEYS.map(k => { const [x,y]=k.split('_');
-    return `<button class="mm-chip ${recipePair===k?'on':''}" onclick="recipePair=(recipePair==='${k}'?null:'${k}');renderRecipeList()">${CH[x].name} + ${CH[y].name}</button>`; }).join('')}</div>`;
+  $('#recipe-teams').innerHTML = q ? "" : `<div class="mm-label">${mode === 'app' ? 'VITAMIN &amp; MINERAL PAIRINGS <span style="font-weight:500">· tap to open that chapter</span>' : 'BY BUDDY TEAM'}</div><div class="rowscroll">${BUDDY_KEYS.map(k =>
+    `<button class="mm-chip ${recipePair===k?'on':''}" onclick="${mode === 'app' ? `openBook('pair:${k}')` : `recipePair=(recipePair==='${k}'?null:'${k}');renderRecipeList()`}">${pairLabelKey(k)}</button>`).join('')}</div>`;
+  if(mode === 'app' && !q){ $('#recipe-list').innerHTML = ""; return; }   // the cookbook IS the recipe list in the grown-up view
   let rows = RECIPES;
   if(q) rows = rows.filter(r => (r.name + ' ' + (RECIPE_TAG[r.id]||'') + ' ' + r.ingredients.join(' ') + ' ' + r.shopping.join(' ')).toLowerCase().includes(q));
   else { if(recipeMeal) rows = rows.filter(r => r.meal === recipeMeal); if(recipePair) rows = rows.filter(r => ruleKey(r.pair[0], r.pair[1]) === recipePair); }
-  const label = q ? 'RESULTS' : [recipeMeal ? recipeMeal.toUpperCase() : null, recipePair ? (CH[recipePair.split('_')[0]].name + ' + ' + CH[recipePair.split('_')[1]].name).toUpperCase() : null].filter(Boolean).join(' · ') || 'ALL RECIPES';
+  const label = q ? 'RESULTS' : [recipeMeal ? recipeMeal.toUpperCase() : null, recipePair ? pairLabelKey(recipePair).toUpperCase() : null].filter(Boolean).join(' · ') || 'ALL RECIPES';
   $('#recipe-list').innerHTML = `<div class="mm-label">${label} <span style="font-weight:500">· ${rows.length}</span></div>` +
     (rows.length ? rows.map(r => { const A = CH[r.pair[0]], B = CH[r.pair[1]];
-      return `<div class="rcard" onclick="openRecipe('${r.id}')">
+      return `<div class="rcard" onclick="${mode === 'app' ? `openBook(null,'${r.id}')` : `openRecipe('${r.id}')`}">
         <div style="position:relative">${recipeMedia(r, 120)}</div>
         <div class="rb"><div class="rt">${r.name}</div>
-          <div class="rs">${RECIPE_TAG[r.id]||''} · ${A.name} + ${B.name} · ${r.prep} min</div></div>
+          <div class="rs">${RECIPE_TAG[r.id]||''} · ${pairLabel(r.pair[0], r.pair[1])} · ${r.prep} min</div></div>
       </div>`; }).join('') : `<p class="muted center">Nothing here yet — try another search.</p>`);
 }
 $('#recipe-search').addEventListener('input', () => { recipeMeal = null; recipePair = null; renderRecipeList(); });
@@ -1342,14 +1341,16 @@ $('#recipe-search').addEventListener('input', () => { recipeMeal = null; recipeP
 let bookChapter = null, bookPages = [], bookIdx = 0, editingNote = null;
 function openBook(chapter, startId){
   bookChapter = chapter;
-  bookPages = chapter ? RECIPES.filter(r => r.meal === chapter) : RECIPES.slice();
+  bookPages = !chapter ? RECIPES.slice()
+            : chapter.startsWith('pair:') ? RECIPES.filter(r => ruleKey(r.pair[0], r.pair[1]) === chapter.slice(5))
+            : RECIPES.filter(r => r.meal === chapter);
   bookIdx = Math.max(0, startId ? bookPages.findIndex(r => r.id === startId) : 0);
   editingNote = null;
   go('book');
 }
 function renderBook(){
   const strip = $('#bk-strip');
-  $('#bk-chapter').textContent = (bookChapter ? (bookChapter === 'Snack' ? 'SNACKS' : bookChapter.toUpperCase()) : 'ALL RECIPES') + ' · ' + bookPages.length + ' PAGES';
+  $('#bk-chapter').textContent = chapterLabel() + ' · ' + bookPages.length + ' PAGES';
   strip.innerHTML = bookPages.map((r, i) => renderPage(r, i)).join('');
   renderDots();
   // jump to the current page without animation, then track swipes
@@ -1371,20 +1372,40 @@ function renderPage(r, i){
        <div class="pg-btns" style="margin-top:8px"><button class="btn" onclick="saveNote('${r.id}')">Save note</button><button class="btn light" onclick="editingNote=null;renderBook()">Cancel</button></div>`
     : (note ? `<div class="note" onclick="editingNote='${r.id}';renderBook();setTimeout(()=>{const t=$('#note-ta');if(t)t.focus()},50)">“${esc2(note)}”</div>`
             : `<div class="note empty" onclick="editingNote='${r.id}';renderBook();setTimeout(()=>{const t=$('#note-ta');if(t)t.focus()},50)">＋ Add a note — how did it go?</div>`);
-  return `<div class="page" data-id="${r.id}"><div class="pg">
+  const id = r.id;
+  return `<div class="page" data-id="${id}"><div class="pg">
     <div style="position:relative">${recipeMedia(r, 200)}${stkHtml}</div>
     <div class="pb">
-      <div class="pk">${(bookChapter ? (bookChapter==='Snack'?'SNACKS':bookChapter.toUpperCase()) : 'RECIPES')} · PAGE ${i+1} OF ${bookPages.length}</div>
+      <div class="pk">${chapterLabel()} · PAGE ${i+1} OF ${bookPages.length}</div>
       <div class="pt">${r.name}</div>
-      <div class="ps">${RECIPE_TAG[r.id]||''} · ${A.name} + ${B.name} · ${r.prep} min</div>
+      <div class="ps">${RECIPE_TAG[r.id]||''}</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+        <span class="pairbadge">${chip(A)}${chip(B)} ${pairLabel(r.pair[0], r.pair[1])}</span>
+        <span class="meta">${r.meal} · ${r.prep} min · serves ${r.serves}</span></div>
+      <p style="font-size:14px;margin:6px 0 0">${r.why}</p>
+      <div class="seg" style="margin:10px 0">
+        <button class="on" onclick="segPage(this,'${id}','ing')">Ingredients</button>
+        <button onclick="segPage(this,'${id}','steps')">Steps</button>
+        <button onclick="segPage(this,'${id}','shop')">Shopping</button></div>
+      <div class="segpane on" id="pane-${id}-ing">${r.ingredients.map(checkRow).join('')}</div>
+      <div class="segpane" id="pane-${id}-steps">${r.steps.map((s,k)=>checkRow((k+1)+'. '+s)).join('')}</div>
+      <div class="segpane" id="pane-${id}-shop">${r.shopping.map(checkRow).join('')}</div>
+      <div class="expander" style="margin-top:12px"><b>For grown-ups:</b> ${r.parent}</div>
+      <div class="mm-label" style="margin-top:14px">OUR NOTE</div>
       ${noteHtml}
       ${editingNote === r.id ? '' : `<div class="pg-btns">
-        <button class="btn" onclick="openRecipe('${r.id}')">Cook this</button>
-        <button class="btn light" onclick="openStickers('${r.id}')">Sticker</button>
-        ${PHOTOS[r.id] ? '' : `<button class="btn light sq" title="Add our photo" onclick="openId='${r.id}';$('#photo-in').click()">📷</button>`}
-        ${mode === 'app' ? `<button class="btn light sq" title="Share" onclick="shareRecipe('${r.id}')">↑</button>` : ''}
-      </div>`}
+        <button class="btn" onclick="openId='${id}';$('#photo-in').click()">📷 ${PHOTOS[id] ? 'Change photo' : 'We made it!'}</button>
+        <button class="btn light" onclick="openStickers('${id}')">Sticker</button>
+        ${mode === 'app' ? `<button class="btn light sq" title="Share" onclick="shareRecipe('${id}')">↑</button>` : ''}
+      </div>
+      ${PHOTOS[id] ? `<button class="mm-x" style="font-size:12px;font-weight:600;margin-top:6px" onclick="removePhoto('${id}')">Remove our photo</button>` : ''}
+      <div class="photo-note">Photos and notes stay on this device only — they're never sent anywhere.</div>
+      <p class="meta" style="margin-top:10px">For learning and fun — not medical advice. Check with a grown-up about allergies.</p>`}
     </div></div></div>`;
+}
+function segPage(btn, id, pane){
+  btn.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
+  ['ing','steps','shop'].forEach(p => { const el = $('#pane-' + id + '-' + p); if(el) el.classList.toggle('on', p === pane); });
 }
 function saveNote(id){ const t = $('#note-ta'); book.notes[id] = t ? t.value.trim() : ""; editingNote = null; saveBook(); renderBook(); }
 
@@ -1402,14 +1423,6 @@ function addSticker(e){
 }
 function peelSticker(id, k){ (book.stickers[id]||[]).splice(k,1); saveBook(); renderBook(); }
 function closeSheet(){ document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open')); }
-
-/* ---- cover editor ---- */
-function openCoverEditor(){
-  $('#cover-name').value = book.title || "";
-  $('#cover-swatches').innerHTML = Object.keys(COVER_COLORS).map(c => `<button class="${book.color===c?'on':''}" style="background:linear-gradient(160deg,${COVER_COLORS[c][0]},${COVER_COLORS[c][1]})" onclick="book.color='${c}';saveBook();renderCover();openCoverEditor()"></button>`).join('');
-  $('#cover-stk').innerHTML = STICKERS.map(e => `<button style="${book.coverStk===e?'border-color:var(--ink)':''}" onclick="book.coverStk='${e}';saveBook();renderCover();openCoverEditor()">${e}</button>`).join('');
-  $('#sheet-cover').classList.add('open');
-}
 
 /* ---- share a recipe card (grown-up view only) ----------------------------
    Draws a card on the device — the family's photo (or the dish emoji), the
@@ -1434,11 +1447,11 @@ async function shareRecipe(id){
   ctx.font = "bold 40px -apple-system, Helvetica, Arial, sans-serif"; ctx.fillText(PHOTOS[r.id] ? "WE MADE IT!" : "ON OUR LIST", 80, 980);
   ctx.font = "bold 66px -apple-system, Helvetica, Arial, sans-serif"; wrapText(ctx, r.name, 80, 1060, W-160, 74);
   ctx.font = "40px -apple-system, Helvetica, Arial, sans-serif"; ctx.globalAlpha = .85;
-  ctx.fillText(`${A.name} + ${B.name} are buddies · ${r.prep} min`, 80, 1215); ctx.globalAlpha = 1;
+  ctx.fillText(`${A.nutrient} + ${B.nutrient} work together · ${r.prep} min`, 80, 1215); ctx.globalAlpha = 1;
   ctx.font = "bold 34px -apple-system, Helvetica, Arial, sans-serif"; ctx.textAlign = "right"; ctx.fillText("Vitamin Village", W-80, 1290);
   const blob = await new Promise(res => cv.toBlob(res, 'image/jpeg', .85));
   const file = new File([blob], `${r.id}-${r.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.jpg`, { type:'image/jpeg' });
-  const text = `${PHOTOS[r.id] ? 'We made' : 'Cooking'} ${r.name} from Vitamin Village — ${A.name} + ${B.name} are buddies! ${location.origin}${location.pathname}?mode=app`;
+  const text = `${PHOTOS[r.id] ? 'We made' : 'Cooking'} ${r.name} from Vitamin Village — ${A.nutrient} and ${B.nutrient} work together. ${location.origin}${location.pathname}?mode=app`;
   try{
     if(navigator.canShare && navigator.canShare({ files:[file] })) await navigator.share({ files:[file], title:r.name, text });
     else if(navigator.share) await navigator.share({ title:r.name, text });
@@ -1458,7 +1471,7 @@ function openRecipe(id){
     <h1 style="margin-top:14px;font-size:22px;line-height:1.2">${r.name}</h1>
     <div class="muted" style="font-size:13px;margin:4px 0 10px">${RECIPE_TAG[r.id]||''}</div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-      <span class="pairbadge">${chip(A)}${chip(B)} ${A.name} + ${B.name}</span>
+      <span class="pairbadge">${chip(A)}${chip(B)} ${pairLabel(r.pair[0], r.pair[1])}</span>
       <span class="meta">${r.meal} · ${r.prep} min · serves ${r.serves}</span></div>
     <p style="font-size:14px;margin:8px 0 0">${r.why}</p>
     <div class="seg">
@@ -1502,7 +1515,7 @@ async function storePhoto(id, dataURL){
 async function removePhoto(id){
   delete PHOTOS[id];
   try{ if(!testMode){ const db = await photoDB(); db.transaction("photos", "readwrite").objectStore("photos").delete(id); } }catch(e){}
-  openRecipe(id);
+  if($('#s-book').classList.contains('active')) renderBook(); else openRecipe(id);
 }
 $('#photo-in').addEventListener('change', e => {
   const file = e.target.files && e.target.files[0]; if(!file || !openId) return;
