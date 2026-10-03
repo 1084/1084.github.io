@@ -313,6 +313,54 @@
   .foodrow .fx{flex-basis:100%;font-size:12px;color:var(--muted);padding:6px 0 0 44px;line-height:1.6;}
   .foodrow .fx a{color:var(--buddy);font-weight:600;cursor:pointer;}
   .photo-note{font-size:11px;color:#8b8a83;text-align:center;margin-top:6px;}
+
+  /* ---------- v8: the family cookbook ---------- */
+  .cover{position:relative;border-radius:16px;padding:18px 16px 16px;box-shadow:0 8px 22px rgba(0,0,0,.14);
+    border-left:9px solid rgba(0,0,0,.28);overflow:hidden;cursor:pointer;}
+  .cover .cv-the{font-size:11px;font-weight:600;letter-spacing:.08em;opacity:.75;}
+  .cover .cv-title{font-size:24px;font-weight:800;line-height:1.1;margin-top:2px;}
+  .cover .cv-row{display:flex;gap:5px;margin-top:14px;flex-wrap:wrap;}
+  .cover .cv-row span{width:30px;height:30px;border-radius:7px;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:16px;overflow:hidden;}
+  .cover .cv-row img{width:100%;height:100%;object-fit:cover;}
+  .cover .cv-prog{margin-top:12px;font-size:12px;font-weight:600;}
+  .cover .cv-bar{height:6px;background:rgba(255,255,255,.5);border-radius:99px;margin-top:5px;overflow:hidden;}
+  .cover .cv-bar i{display:block;height:100%;background:rgba(0,0,0,.55);border-radius:99px;transition:width .4s;}
+  .stk{position:absolute;font-size:30px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.25));pointer-events:none;}
+  .cover .stk{pointer-events:auto;cursor:pointer;}
+  /* book screen */
+  #s-book{padding:0 0 92px;}
+  .bk-top{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px;}
+  .bk-top .ch{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.05em;}
+  .bk-strip{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .bk-strip::-webkit-scrollbar{display:none;}
+  .page{flex:none;width:100%;scroll-snap-align:center;padding:0 18px;}
+  .page .pg{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow);}
+  .page .rmedia{height:200px;position:relative;}
+  .page .remoji{font-size:64px;}
+  .page .pb{padding:14px 14px 16px;}
+  .page .pk{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.04em;}
+  .page .pt{font-size:19px;font-weight:700;line-height:1.2;margin-top:4px;}
+  .page .ps{font-size:12px;color:var(--muted);margin:3px 0 10px;}
+  .note{background:#FFF8D6;border-radius:4px 14px 14px 4px;padding:10px 12px;font-size:13px;line-height:1.5;color:#5A4A1A;
+    transform:rotate(-1deg);box-shadow:0 2px 6px rgba(0,0,0,.08);font-style:italic;margin:4px 0 6px;}
+  .note.empty{font-style:normal;color:#9A8A5A;background:#FBF6E4;transform:none;box-shadow:none;border:1.5px dashed #E6D9A8;cursor:pointer;}
+  .note-edit{width:100%;font-family:inherit;font-size:14px;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;resize:vertical;min-height:70px;}
+  .pg-btns{display:flex;gap:6px;margin-top:12px;}
+  .pg-btns .btn{flex:1;padding:9px 6px;font-size:12px;}
+  .pg-btns .btn.sq{flex:0 0 42px;padding:9px 0;}
+  .dots-pg{display:flex;justify-content:center;gap:5px;margin:14px 0 4px;flex-wrap:wrap;}
+  .dots-pg i{width:6px;height:6px;border-radius:50%;background:var(--line);transition:all .2s;}
+  .dots-pg i.on{width:18px;border-radius:99px;background:var(--ink);}
+  .swipehint{font-size:11px;color:#8b8a83;text-align:center;}
+  /* sticker picker + cover editor */
+  .sheet{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:25;display:none;align-items:flex-end;}
+  .sheet.open{display:flex;}
+  .sheet .inner{background:var(--bg);border-radius:20px 20px 0 0;padding:16px 18px calc(18px + env(safe-area-inset-bottom));width:100%;max-height:80%;overflow-y:auto;}
+  .stkgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:10px 0;}
+  .stkgrid button{background:var(--card);border:1.5px solid var(--line);border-radius:12px;font-size:26px;padding:8px 0;}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px;}
+  .swatches button{width:38px;height:38px;border-radius:10px;border:2px solid transparent;}
+  .swatches button.on{border-color:var(--ink);}
 </style>
 </head>
 
@@ -328,7 +376,7 @@
 
   <!-- ============ SCREEN: VILLAGE ============ -->
   <section class="screen active" id="s-village">
-    <h1>Vitamin Village <span style="font-size:11px;font-weight:600;color:var(--muted);vertical-align:middle;margin-left:6px">v7</span></h1>
+    <h1>Vitamin Village <span style="font-size:11px;font-weight:600;color:var(--muted);vertical-align:middle;margin-left:6px">v8</span></h1>
     <div id="mode-pill-village" style="margin:-2px 0 10px"></div>
     <div class="progress">
       <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;">
@@ -363,10 +411,34 @@
     <p class="muted" style="margin-top:-4px"><span id="recipe-count"></span> buddy-team meals</p>
     <div id="mode-pill-recipes"></div>
     <input class="search" id="recipe-search" placeholder="Search recipes or foods" style="margin-top:10px">
+    <div id="cookbook-cover"></div>
     <div id="recipe-tiles"></div>
     <div id="recipe-teams"></div>
     <div id="recipe-list"></div>
   </section>
+
+  <!-- ============ SCREEN: COOKBOOK (swipe pages) ============ -->
+  <section class="screen" id="s-book">
+    <div class="bk-top"><button class="backlink" style="margin:0" onclick="go('recipes')">‹ Cookbook</button><span class="ch" id="bk-chapter"></span></div>
+    <div class="bk-strip" id="bk-strip"></div>
+    <div class="dots-pg" id="bk-dots"></div>
+    <div class="swipehint">swipe for the next page</div>
+  </section>
+
+  <!-- sticker picker / cover editor sheets -->
+  <div class="sheet" id="sheet-stk" onclick="if(event.target===this)closeSheet()"><div class="inner">
+    <h2 style="margin:0">Add a sticker</h2><p class="muted" style="font-size:12px;margin:2px 0 0">Tap one to stick it on. Tap a sticker on the page to peel it off.</p>
+    <div class="stkgrid" id="stk-grid"></div>
+    <button class="btn light" onclick="closeSheet()">Done</button></div></div>
+  <div class="sheet" id="sheet-cover" onclick="if(event.target===this)closeSheet()"><div class="inner">
+    <h2 style="margin:0">Our cookbook cover</h2>
+    <div class="mm-label">NAME</div>
+    <input class="search" id="cover-name" placeholder="The Smith Family Cookbook" maxlength="40" oninput="book.title=this.value;saveBook();renderCover()">
+    <div class="mm-label">COLOUR</div>
+    <div class="swatches" id="cover-swatches"></div>
+    <div class="mm-label">COVER STICKER</div>
+    <div class="stkgrid" id="cover-stk"></div>
+    <button class="btn light" onclick="closeSheet()">Done</button></div></div>
 
   <!-- ============ SCREEN: RECIPE DETAIL ============ -->
   <section class="screen" id="s-recipe">
@@ -892,12 +964,16 @@ let testMode = false;            // true under ?test=... — nothing is saved
    keeps the "collects nothing" promise while letting progress survive a
    reload. Each try/catch means the app still runs if storage is blocked.  */
 const STORE = { discovered:"vv-discovered", celebrated:"vv-celebrated",
-                ideas:"vv-ideas", onboarded:"vv-onboarded" };
+                ideas:"vv-ideas", onboarded:"vv-onboarded", book:"vv-book" };
+/* The family cookbook: cover + per-recipe notes and stickers. On-device only. */
+const book = { title:"", color:"amber", coverStk:"⭐", notes:{}, stickers:{} };
+function saveBook(){ if(testMode) return; try{ localStorage.setItem(STORE.book, JSON.stringify(book)); }catch(e){} }
 function loadState(){
   try{
     JSON.parse(localStorage.getItem(STORE.discovered) || "[]").forEach(k => discovered.add(k));
     JSON.parse(localStorage.getItem(STORE.ideas) || "[]").forEach(i => savedIdeas.push(i));
     if(localStorage.getItem(STORE.celebrated) === "1") window._celebrationShown = true;
+    Object.assign(book, JSON.parse(localStorage.getItem(STORE.book) || "{}"));
   }catch(e){}
 }
 function saveState(){
@@ -990,11 +1066,12 @@ function renderModePills(){
 function go(name){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $('#s-' + name).classList.add('active');
-  renderNav(name === 'recipe' ? 'recipes' : name);
+  renderNav((name === 'recipe' || name === 'book') ? 'recipes' : name);
   $('#phone').scrollTop = 0;
   if(name === 'reward')  renderReward();
   if(name === 'foods')   renderFoods();
   if(name === 'recipes') renderRecipeList();
+  if(name === 'book')    renderBook();
   if(name === 'combo')   renderComboPairs();
 }
 
@@ -1206,13 +1283,45 @@ function recipeMedia(r, h){
   </div>`;
 }
 
+/* ---------------- THE FAMILY COOKBOOK ----------------
+   The cover sits at the top of Recipes. Tapping it, or a meal tile, opens
+   the book at that chapter: one swipeable page per recipe. Pages carry the
+   family's photo (from v7), a note, and stickers — all on this device.      */
+const COVER_COLORS = { amber:["#F3D9A6","#E0A93E","#4A3208"], blue:["#CFE3F7","#4E97DD","#0C447C"], green:["#D9ECC0","#7DB33F","#27500A"],
+  coral:["#F6CDBF","#D96B45","#712B13"], pink:["#F6CFDD","#D75E8A","#72243E"], teal:["#C9EFE0","#3BB58C","#085041"], purple:["#DDDAF7","#8E86E0","#3C3489"] };
+const STICKERS = ["⭐","🏆","❤️","🌈","🎉","👍","😋","🔥","🥇","🍀","🦄","🚀","🎨","💪","🌟","😍","🐣","🧁"];
+function pagesWithPhoto(){ return RECIPES.filter(r => PHOTOS[r.id]).length; }
+function coverTitle(){ return book.title && book.title.trim() ? book.title.trim() : "Our Family Cookbook"; }
+function renderCover(){
+  const el = $('#cookbook-cover'); if(!el) return;
+  const [bg1,bg2,ink] = COVER_COLORS[book.color] || COVER_COLORS.amber;
+  const n = pagesWithPhoto(), total = RECIPES.length;
+  const recent = RECIPES.filter(r => PHOTOS[r.id]).slice(-4);
+  const row = (recent.length ? recent.map(r => `<span><img src="${PHOTOS[r.id]}" alt=""></span>`) : ["🍳","🌯","🥗","🍲"].map(e => `<span>${e}</span>`)).join('');
+  el.innerHTML = `<div class="mm-label" style="margin-top:12px">OUR COOKBOOK</div>
+    <div class="cover" style="background:linear-gradient(160deg,${bg1},${bg2});color:${ink}" onclick="openBook(null)">
+      <div class="stk" style="right:14px;top:10px;transform:rotate(12deg)">${book.coverStk||''}</div>
+      <div class="cv-the">THE</div><div class="cv-title">${esc2(coverTitle())}</div>
+      <div class="cv-row">${row}</div>
+      <div class="cv-prog">${n} of ${total} pages have your photo</div>
+      <div class="cv-bar"><i style="width:${total?n/total*100:0}%"></i></div>
+    </div>
+    <div class="mm-btnrow" style="margin-top:10px">
+      <button class="btn" onclick="openBook(null)">Open the book</button>
+      <button class="btn light" onclick="openCoverEditor()">Decorate cover</button>
+    </div>`;
+}
+function esc2(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
 let recipeMeal = null, recipePair = null;
 function renderRecipeList(){
   $('#recipe-count').textContent = RECIPES.length;
+  renderCover();
   const q = $('#recipe-search').value.trim().toLowerCase();
   const counts = {}; RECIPES.forEach(r => counts[r.meal] = (counts[r.meal]||0)+1);
-  $('#recipe-tiles').innerHTML = q ? "" : `<div class="mm-label">BROWSE BY MEAL</div><div class="tiles">${["Breakfast","Lunch","Dinner","Snack"].map(m =>
-    `<div class="tile ${recipeMeal===m?'on':''}" style="background:${MEAL_BG[m]}" onclick="recipeMeal=(recipeMeal==='${m}'?null:'${m}');renderRecipeList()">
+  $('#cookbook-cover').style.display = q ? "none" : "";
+  $('#recipe-tiles').innerHTML = q ? "" : `<div class="mm-label">BROWSE BY MEAL <span style="font-weight:500">· tap to open that chapter</span></div><div class="tiles">${["Breakfast","Lunch","Dinner","Snack"].map(m =>
+    `<div class="tile ${recipeMeal===m?'on':''}" style="background:${MEAL_BG[m]}" onclick="openBook('${m}')">
       <div class="te">${MEAL_EMOJI[m]}</div><div class="tn">${m==='Snack'?'Snacks':m}</div><div class="tc">${counts[m]||0}</div></div>`).join('')}</div>`;
   $('#recipe-teams').innerHTML = q ? "" : `<div class="mm-label">BY BUDDY TEAM</div><div class="rowscroll">${BUDDY_KEYS.map(k => { const [x,y]=k.split('_');
     return `<button class="mm-chip ${recipePair===k?'on':''}" onclick="recipePair=(recipePair==='${k}'?null:'${k}');renderRecipeList()">${CH[x].name} + ${CH[y].name}</button>`; }).join('')}</div>`;
@@ -1229,13 +1338,123 @@ function renderRecipeList(){
       </div>`; }).join('') : `<p class="muted center">Nothing here yet — try another search.</p>`);
 }
 $('#recipe-search').addEventListener('input', () => { recipeMeal = null; recipePair = null; renderRecipeList(); });
+/* ---- the book itself ---- */
+let bookChapter = null, bookPages = [], bookIdx = 0, editingNote = null;
+function openBook(chapter, startId){
+  bookChapter = chapter;
+  bookPages = chapter ? RECIPES.filter(r => r.meal === chapter) : RECIPES.slice();
+  bookIdx = Math.max(0, startId ? bookPages.findIndex(r => r.id === startId) : 0);
+  editingNote = null;
+  go('book');
+}
+function renderBook(){
+  const strip = $('#bk-strip');
+  $('#bk-chapter').textContent = (bookChapter ? (bookChapter === 'Snack' ? 'SNACKS' : bookChapter.toUpperCase()) : 'ALL RECIPES') + ' · ' + bookPages.length + ' PAGES';
+  strip.innerHTML = bookPages.map((r, i) => renderPage(r, i)).join('');
+  renderDots();
+  // jump to the current page without animation, then track swipes
+  requestAnimationFrame(() => { strip.scrollLeft = bookIdx * strip.clientWidth; });
+  strip.onscroll = () => { const i = Math.round(strip.scrollLeft / Math.max(1, strip.clientWidth)); if(i !== bookIdx){ bookIdx = i; renderDots(); } };
+}
+function renderDots(){
+  const el = $('#bk-dots'); const n = bookPages.length;
+  el.innerHTML = n <= 20 ? bookPages.map((_, i) => `<i class="${i===bookIdx?'on':''}"></i>`).join('')
+                          : `<span class="muted" style="font-size:12px;font-weight:600">${bookIdx+1} / ${n}</span>`;
+}
+function renderPage(r, i){
+  const A = CH[r.pair[0]], B = CH[r.pair[1]];
+  const note = (book.notes[r.id] || "").trim();
+  const stks = book.stickers[r.id] || [];
+  const stkHtml = stks.map((s, k) => `<span class="stk" style="left:${s.x}%;top:${s.y}%;transform:rotate(${s.r}deg);pointer-events:auto;cursor:pointer" onclick="peelSticker('${r.id}',${k})">${s.e}</span>`).join('');
+  const noteHtml = editingNote === r.id
+    ? `<textarea class="note-edit" id="note-ta" placeholder="How did it go? Who loved it? What would you change?" maxlength="240">${esc2(book.notes[r.id]||"")}</textarea>
+       <div class="pg-btns" style="margin-top:8px"><button class="btn" onclick="saveNote('${r.id}')">Save note</button><button class="btn light" onclick="editingNote=null;renderBook()">Cancel</button></div>`
+    : (note ? `<div class="note" onclick="editingNote='${r.id}';renderBook();setTimeout(()=>{const t=$('#note-ta');if(t)t.focus()},50)">“${esc2(note)}”</div>`
+            : `<div class="note empty" onclick="editingNote='${r.id}';renderBook();setTimeout(()=>{const t=$('#note-ta');if(t)t.focus()},50)">＋ Add a note — how did it go?</div>`);
+  return `<div class="page" data-id="${r.id}"><div class="pg">
+    <div style="position:relative">${recipeMedia(r, 200)}${stkHtml}</div>
+    <div class="pb">
+      <div class="pk">${(bookChapter ? (bookChapter==='Snack'?'SNACKS':bookChapter.toUpperCase()) : 'RECIPES')} · PAGE ${i+1} OF ${bookPages.length}</div>
+      <div class="pt">${r.name}</div>
+      <div class="ps">${RECIPE_TAG[r.id]||''} · ${A.name} + ${B.name} · ${r.prep} min</div>
+      ${noteHtml}
+      ${editingNote === r.id ? '' : `<div class="pg-btns">
+        <button class="btn" onclick="openRecipe('${r.id}')">Cook this</button>
+        <button class="btn light" onclick="openStickers('${r.id}')">Sticker</button>
+        ${PHOTOS[r.id] ? '' : `<button class="btn light sq" title="Add our photo" onclick="openId='${r.id}';$('#photo-in').click()">📷</button>`}
+        ${mode === 'app' ? `<button class="btn light sq" title="Share" onclick="shareRecipe('${r.id}')">↑</button>` : ''}
+      </div>`}
+    </div></div></div>`;
+}
+function saveNote(id){ const t = $('#note-ta'); book.notes[id] = t ? t.value.trim() : ""; editingNote = null; saveBook(); renderBook(); }
+
+/* ---- stickers ---- */
+let stickerTarget = null;
+function openStickers(id){ stickerTarget = id;
+  $('#stk-grid').innerHTML = STICKERS.map(e => `<button onclick="addSticker('${e}')">${e}</button>`).join('');
+  $('#sheet-stk').classList.add('open'); }
+function addSticker(e){
+  if(!stickerTarget) return;
+  const list = book.stickers[stickerTarget] = book.stickers[stickerTarget] || [];
+  if(list.length >= 6) list.shift();
+  list.push({ e, x: 8 + Math.random()*74, y: 8 + Math.random()*60, r: Math.round(-20 + Math.random()*40) });
+  saveBook(); closeSheet(); renderBook();
+}
+function peelSticker(id, k){ (book.stickers[id]||[]).splice(k,1); saveBook(); renderBook(); }
+function closeSheet(){ document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open')); }
+
+/* ---- cover editor ---- */
+function openCoverEditor(){
+  $('#cover-name').value = book.title || "";
+  $('#cover-swatches').innerHTML = Object.keys(COVER_COLORS).map(c => `<button class="${book.color===c?'on':''}" style="background:linear-gradient(160deg,${COVER_COLORS[c][0]},${COVER_COLORS[c][1]})" onclick="book.color='${c}';saveBook();renderCover();openCoverEditor()"></button>`).join('');
+  $('#cover-stk').innerHTML = STICKERS.map(e => `<button style="${book.coverStk===e?'border-color:var(--ink)':''}" onclick="book.coverStk='${e}';saveBook();renderCover();openCoverEditor()">${e}</button>`).join('');
+  $('#sheet-cover').classList.add('open');
+}
+
+/* ---- share a recipe card (grown-up view only) ----------------------------
+   Draws a card on the device — the family's photo (or the dish emoji), the
+   title and buddy team — and hands it to the phone's own share sheet. The
+   app never sees who it goes to: no contacts, no server, no social SDKs.  */
+async function shareRecipe(id){
+  const r = RECIPES.find(x => x.id === id); if(!r) return;
+  const A = CH[r.pair[0]], B = CH[r.pair[1]];
+  const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  const [bg1,bg2,ink] = COVER_COLORS[book.color] || COVER_COLORS.amber;
+  const g = ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,bg1); g.addColorStop(1,bg2);
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  // photo or emoji panel
+  const px = 70, py = 70, pw = W-140, ph = 820;
+  ctx.fillStyle = "rgba(255,255,255,.55)"; roundRect(ctx, px, py, pw, ph, 36); ctx.fill();
+  if(PHOTOS[r.id]){
+    await new Promise(res => { const im = new Image(); im.onload = () => { ctx.save(); roundRect(ctx, px, py, pw, ph, 36); ctx.clip();
+      const s = Math.max(pw/im.width, ph/im.height), dw = im.width*s, dh = im.height*s; ctx.drawImage(im, px+(pw-dw)/2, py+(ph-dh)/2, dw, dh); ctx.restore(); res(); }; im.onerror = res; im.src = PHOTOS[r.id]; });
+  } else { ctx.font = "360px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(RECIPE_EMOJI[r.id]||'🍽', W/2, py+ph/2); }
+  ctx.fillStyle = ink; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  ctx.font = "bold 40px -apple-system, Helvetica, Arial, sans-serif"; ctx.fillText(PHOTOS[r.id] ? "WE MADE IT!" : "ON OUR LIST", 80, 980);
+  ctx.font = "bold 66px -apple-system, Helvetica, Arial, sans-serif"; wrapText(ctx, r.name, 80, 1060, W-160, 74);
+  ctx.font = "40px -apple-system, Helvetica, Arial, sans-serif"; ctx.globalAlpha = .85;
+  ctx.fillText(`${A.name} + ${B.name} are buddies · ${r.prep} min`, 80, 1215); ctx.globalAlpha = 1;
+  ctx.font = "bold 34px -apple-system, Helvetica, Arial, sans-serif"; ctx.textAlign = "right"; ctx.fillText("Vitamin Village", W-80, 1290);
+  const blob = await new Promise(res => cv.toBlob(res, 'image/jpeg', .85));
+  const file = new File([blob], `${r.id}-${r.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.jpg`, { type:'image/jpeg' });
+  const text = `${PHOTOS[r.id] ? 'We made' : 'Cooking'} ${r.name} from Vitamin Village — ${A.name} + ${B.name} are buddies! ${location.origin}${location.pathname}?mode=app`;
+  try{
+    if(navigator.canShare && navigator.canShare({ files:[file] })) await navigator.share({ files:[file], title:r.name, text });
+    else if(navigator.share) await navigator.share({ title:r.name, text });
+    else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; a.click(); }
+  }catch(e){ /* user cancelled the share sheet — nothing to do */ }
+}
+function roundRect(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function wrapText(ctx, text, x, y, maxW, lh){ const words = text.split(' '); let line = ''; for(const w of words){ const t = line ? line+' '+w : w; if(ctx.measureText(t).width > maxW && line){ ctx.fillText(line, x, y); line = w; y += lh; } else line = t; } ctx.fillText(line, x, y); }
+
 let openId = null;
 function openRecipe(id){
   openId = id;
   const r = RECIPES.find(x => x.id === id);
   const A = CH[r.pair[0]], B = CH[r.pair[1]];
   $('#recipe-detail').innerHTML = `
-    <div class="hero">${recipeMedia(r, 210)}<div class="backbtn" onclick="go('recipes')">‹</div></div>
+    <div class="hero">${recipeMedia(r, 210)}<div class="backbtn" onclick="${bookPages.length && $('#s-book') ? "openBook(bookChapter,'"+r.id+"')" : "go('recipes')"}">‹</div></div>
     <h1 style="margin-top:14px;font-size:22px;line-height:1.2">${r.name}</h1>
     <div class="muted" style="font-size:13px;margin:4px 0 10px">${RECIPE_TAG[r.id]||''}</div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
@@ -1254,6 +1473,7 @@ function openRecipe(id){
     <button class="btn" onclick="$('#photo-in').click()">📷 &nbsp;${PHOTOS[r.id] ? 'Change our photo' : 'We made it! Add our photo'}</button>
     ${PHOTOS[r.id] ? `<button class="btn light" style="margin-top:8px" onclick="removePhoto('${r.id}')">Remove our photo</button>` : ''}
     <div class="photo-note">Photos stay on this device only — they're never sent anywhere.</div>
+    ${mode === 'app' ? `<button class="btn light" style="margin-top:10px" onclick="shareRecipe('${r.id}')">↑ &nbsp;Share this recipe card</button>` : ''}
     <p class="meta" style="margin-top:14px">For learning and fun — not medical advice. Check with a grown-up about allergies.</p>`;
   go('recipe');
 }
@@ -1271,7 +1491,7 @@ function photoDB(){ return new Promise((res, rej) => {
   q.onsuccess = e => res(e.target.result); q.onerror = () => rej(q.error); }); }
 async function loadPhotos(){
   try{ const db = await photoDB(); const req = db.transaction("photos").objectStore("photos").openCursor();
-    req.onsuccess = e => { const c = e.target.result; if(c){ PHOTOS[c.key] = c.value; c.continue(); } else if($('#s-recipes').classList.contains('active')) renderRecipeList(); };
+    req.onsuccess = e => { const c = e.target.result; if(c){ PHOTOS[c.key] = c.value; c.continue(); } else { if($('#s-recipes').classList.contains('active')) renderRecipeList(); if($('#s-book').classList.contains('active')) renderBook(); } };
   }catch(e){}
 }
 async function storePhoto(id, dataURL){
@@ -1292,7 +1512,7 @@ $('#photo-in').addEventListener('change', e => {
     const cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
     cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
     URL.revokeObjectURL(url);
-    storePhoto(openId, cv.toDataURL('image/jpeg', 0.72)).then(() => openRecipe(openId));
+    storePhoto(openId, cv.toDataURL('image/jpeg', 0.72)).then(() => { if($('#s-book').classList.contains('active')) renderBook(); else openRecipe(openId); });
   };
   img.src = url; e.target.value = "";
 });
