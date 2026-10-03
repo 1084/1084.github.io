@@ -1,0 +1,208 @@
+<!doctype html>
+<!-- Copyright (c) 2026 John Hubert LLC. All rights reserved. See /LICENSE. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open Chambers · John Hubert LLC</title>
+<meta name="description" content="Open Chambers by John Hubert LLC: see how your representative and senators vote, with alerts. John Hubert LLC builds small, privacy-first apps and writes practical guides. Try Open Chambers, Vitamin Village, and Cove, see what's coming.">
+<meta name="copyright" content="Copyright (c) 2026 John Hubert LLC. All rights reserved.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f6b4b'/%3E%3Cpath d='M9 22V10h4l3 8 3-8h4v12h-3v-7l-3 7h-2l-3-7v7z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #f3f4f0; --surface: #ffffff; --surface-2: #eaece6;
+    --ink: #1c2321; --ink-2: #4f5854; --ink-3: #7f8884;
+    --line: #dcdfd8; --line-strong: #c3c8bf;
+    --accent: #2f6b4b; --accent-ink: #ffffff; --accent-soft: #e2efe6;
+    --st-concept-bg: #e7e4f5; --st-concept-fg: #5b4a9e;
+    --st-proto-bg: #fbeacb;   --st-proto-fg: #8a5a0b;
+    --st-test-bg: #dcecf7;    --st-test-fg: #1f5f8b;
+    --st-live-bg: #dcefe1;    --st-live-fg: #22683f;
+    --font-display: "Manrope", "Helvetica Neue", Arial, sans-serif;
+    --font-body: "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif;
+    --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121614; --surface: #1a1f1c; --surface-2: #232925;
+      --ink: #e7eae6; --ink-2: #aeb5b0; --ink-3: #7f8884;
+      --line: #2b322e; --line-strong: #3c453f;
+      --accent: #7cc39a; --accent-ink: #121614; --accent-soft: #1d2f25;
+      --st-concept-bg: #2a2542; --st-concept-fg: #b9a9f0;
+      --st-proto-bg: #3a2d10; --st-proto-fg: #f0c169;
+      --st-test-bg: #16303f; --st-test-fg: #86c4ee;
+      --st-live-bg: #163122; --st-live-fg: #86d9a5;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px 72px; }
+
+  nav.top { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; font-family: var(--font-mono); font-size: 13px; }
+  nav.top .logo { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+  nav.top .logo i { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); display: inline-grid; place-items: center; color: var(--accent-ink); font-style: normal; font-size: 12px; font-weight: 800; }
+  nav.top .links { display: flex; gap: 20px; }
+  nav.top .links a { color: var(--ink-2); text-decoration: none; }
+  nav.top .links a:hover { color: var(--ink); }
+
+  .hero { padding: 40px 0 36px; border-bottom: 1px solid var(--line); }
+  .hero h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(32px, 5vw, 48px); line-height: 1.05; letter-spacing: -0.025em; margin: 0 0 14px; max-width: 18ch; text-wrap: balance; }
+  .hero p { font-size: 19px; color: var(--ink-2); max-width: 58ch; margin: 0; text-wrap: pretty; }
+
+  .featured { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; align-items: center; margin: 36px 0 48px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 26px 28px; }
+  .featured .eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--st-proto-fg); margin: 0 0 8px; }
+  .featured h2 { font-family: var(--font-display); font-weight: 800; font-size: 28px; letter-spacing: -0.02em; margin: 0 0 8px; }
+  .featured p { margin: 0 0 16px; color: var(--ink-2); }
+  .featured .how { display: grid; gap: 8px; font-size: 15px; color: var(--ink-2); background: var(--surface-2); border-radius: 10px; padding: 14px 16px; }
+  .featured .how b { color: var(--ink); font-weight: 600; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; font-size: 15px; padding: 10px 16px; border-radius: 10px; text-decoration: none; border: 1px solid var(--line-strong); color: var(--ink); background: var(--surface); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn:hover { filter: brightness(0.97); }
+
+  h2.sec { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; margin: 0 0 6px; }
+  .sec-note { color: var(--ink-3); font-size: 15px; margin: 0 0 18px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 48px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .card .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .card h3 { font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: -0.01em; margin: 0; line-height: 1.2; }
+  .card p { margin: 0; color: var(--ink-2); font-size: 15.5px; }
+  .stage { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
+  .stage.concept { background: var(--st-concept-bg); color: var(--st-concept-fg); }
+  .stage.prototype { background: var(--st-proto-bg); color: var(--st-proto-fg); }
+  .stage.testing { background: var(--st-test-bg); color: var(--st-test-fg); }
+  .stage.live { background: var(--st-live-bg); color: var(--st-live-fg); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-2); background: var(--surface-2); padding: 2px 8px; border-radius: 5px; }
+  .card .cta { margin-top: auto; padding-top: 8px; font-size: 14.5px; }
+  .card .cta .soon { color: var(--ink-3); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--ink-3); margin: -30px 0 48px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .guides { display: grid; gap: 10px; margin-bottom: 48px; }
+  .guide { display: grid; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; text-decoration: none; color: inherit; }
+  .guide:hover { border-color: var(--line-strong); }
+  .guide .t { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--ink); }
+  .guide .b { color: var(--ink-2); font-size: 15px; }
+  .guide .m { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+
+  footer { border-top: 1px solid var(--line); padding-top: 20px; font-size: 14px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+  footer a { color: var(--ink-2); }
+
+  @media (max-width: 720px) {
+    .featured { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: 1fr; }
+    nav.top .links { gap: 14px; }
+  }
+
+  /* Open Chambers feature */
+  .oc { background: linear-gradient(135deg, #1F3A5F, #163049); border-color: #1F3A5F; color: #F7F6F2; }
+  .oc .eyebrow { color: #D9A441; }
+  .oc h2 { color: #F7F6F2; display: flex; align-items: center; gap: 12px; }
+  .oc h2 .mark { width: 40px; height: 40px; border-radius: 10px; background: #0f2237; color: #F7F6F2; display: inline-grid; place-items: center; font-size: 36px; flex: 0 0 auto; }
+  .oc p { color: #C8D2E0; }
+  .oc .btn { background: #F7F6F2; color: #1F3A5F; border-color: #F7F6F2; }
+  .oc .btn.primary { background: #D9A441; color: #1A1D21; border-color: #D9A441; }
+  .oc .points { display: grid; gap: 8px; margin: 0 0 18px; padding: 0; list-style: none; font-size: 15.5px; color: #C8D2E0; }
+  .oc .points li { padding-left: 22px; position: relative; }
+  .oc .points li::before { content: ""; position: absolute; left: 0; top: 9px; width: 10px; height: 10px; border-radius: 50%; background: #D9A441; }
+  .oc .fine { font-size: 13.5px; color: #8FA3BD; margin-top: 14px; }
+  .oc .fine a { color: #C8D2E0; }
+  .phone { justify-self: center; width: 250px; aspect-ratio: 250 / 540; border-radius: 36px; background: #0b1624; padding: 10px; box-shadow: 0 30px 60px rgba(0,0,0,.35), inset 0 0 0 2px #2a3d55; }
+  .phone video, .phone img { width: 100%; height: 100%; object-fit: cover; border-radius: 28px; display: block; background: #F7F6F2; }
+  @media (max-width: 720px) { .phone { width: 210px; } }
+</style>
+<script data-goatcounter="https://johnhubert.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+<style>
+  .oc-hero { display:grid; grid-template-columns: 1.1fr 1fr; gap: 32px; align-items:center; padding: 36px 0 44px; border-bottom: 1px solid var(--line); }
+  .oc-hero h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(34px, 5vw, 50px); line-height: 1.05; letter-spacing: -0.025em; margin: 10px 0 14px; }
+  .oc-hero .lead { font-size: 19px; color: var(--ink-2); margin: 0 0 20px; }
+  .brandline { display:flex; align-items:center; gap:12px; font-family: var(--font-display); font-weight:700; font-size: 18px; }
+  .brandline .mark { width: 44px; height: 44px; border-radius: 11px; background: #1F3A5F; color:#F7F6F2; display:inline-grid; place-items:center; font-size: 40px; }
+  .steps { display:grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 36px 0 48px; }
+  .step { background: var(--surface); border:1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .step .n { font-family: var(--font-mono); font-size: 12px; color: #D9A441; letter-spacing: .1em; }
+  .step h3 { font-family: var(--font-display); font-size: 18px; margin: 6px 0 6px; }
+  .step p { margin:0; color: var(--ink-2); font-size: 15.5px; }
+  .shots { display:grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin: 0 0 48px; }
+  .shots img { width:100%; border-radius: 18px; border:1px solid var(--line); display:block; }
+  .faq { display:grid; gap: 10px; margin-bottom: 48px; }
+  .faq details { background: var(--surface); border:1px solid var(--line); border-radius: 10px; padding: 12px 18px; }
+  .faq summary { font-family: var(--font-display); font-weight: 700; cursor: pointer; }
+  .faq p { color: var(--ink-2); margin: 8px 0 0; font-size: 15.5px; }
+  @media (max-width: 720px) { .oc-hero, .steps, .shots { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top">
+    <a class="logo" href="../"><i>JH</i> John Hubert</a>
+    <div class="links"><a href="../#projects">Projects</a><a href="../#guides">Guides</a><a href="../#about">About</a><a href="../privacy.html">Privacy</a></div>
+  </nav>
+
+  <section class="oc-hero">
+    <div>
+      <div class="brandline"><span class="mark"><svg viewBox="0 0 1024 1024" width="1em" height="1em" aria-hidden="true"><circle cx="364.3" cy="574.0" r="34.0" fill="currentColor"/><circle cx="415.6" cy="485.1" r="34.0" fill="currentColor"/><circle cx="608.4" cy="485.1" r="34.0" fill="currentColor"/><circle cx="659.7" cy="574.0" r="34.0" fill="currentColor"/><circle cx="287.5" cy="560.4" r="36.0" fill="currentColor"/><circle cx="329.1" cy="463.8" r="36.0" fill="currentColor"/><circle cx="409.7" cy="396.3" r="36.0" fill="currentColor"/><circle cx="614.3" cy="396.3" r="36.0" fill="currentColor"/><circle cx="694.9" cy="463.8" r="36.0" fill="currentColor"/><circle cx="736.5" cy="560.4" r="36.0" fill="currentColor"/><circle cx="210.6" cy="546.9" r="38.0" fill="currentColor"/><circle cx="247.0" cy="447.0" r="38.0" fill="currentColor"/><circle cx="315.3" cy="365.6" r="38.0" fill="currentColor"/><circle cx="407.3" cy="312.5" r="38.0" fill="currentColor"/><circle cx="616.7" cy="312.5" r="38.0" fill="currentColor"/><circle cx="708.7" cy="365.6" r="38.0" fill="currentColor"/><circle cx="777.0" cy="447.0" r="38.0" fill="currentColor"/><circle cx="813.4" cy="546.9" r="38.0" fill="currentColor"/><circle cx="133.8" cy="533.3" r="40.0" fill="currentColor"/><circle cx="166.9" cy="431.7" r="40.0" fill="currentColor"/><circle cx="226.6" cy="343.1" r="40.0" fill="currentColor"/><circle cx="308.5" cy="274.3" r="40.0" fill="currentColor"/><circle cx="406.2" cy="230.9" r="40.0" fill="currentColor"/><circle cx="617.8" cy="230.9" r="40.0" fill="currentColor"/><circle cx="715.5" cy="274.3" r="40.0" fill="currentColor"/><circle cx="797.4" cy="343.1" r="40.0" fill="currentColor"/><circle cx="857.1" cy="431.7" r="40.0" fill="currentColor"/><circle cx="890.2" cy="533.3" r="40.0" fill="currentColor"/><rect x="387.0" y="634.0" width="250.0" height="68.0" rx="20.0" fill="#D9A441"/></svg></span>Open Chambers</div>
+      <h1>Know how your reps vote.</h1>
+      <p class="lead">Enter your ZIP code. Follow your representative and senators. Get a notification, with a plain-English official summary, every time they vote.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <a class="btn primary" href="../floor/">Try it on the web</a>
+        <a class="btn" href="#get" >Get the iPhone app</a>
+      </div>
+      <p class="sec-note" style="margin-top:14px">Free. No account. No tracking. Made by John Hubert LLC.</p>
+    </div>
+    <div class="phone" style="justify-self:center">
+      <video src="./demo.mp4" poster="./poster.png" autoplay muted loop playsinline aria-label="Open Chambers demo"></video>
+    </div>
+  </section>
+
+  <h2 class="sec" style="margin-top:36px">How it works</h2>
+  <p class="sec-note">Three steps, under a minute.</p>
+  <div class="steps">
+    <div class="step"><div class="n">01</div><h3>Enter your ZIP</h3><p>The app looks up your congressional district from a table on the phone and shows your representative and both senators. The ZIP never leaves your device.</p></div>
+    <div class="step"><div class="n">02</div><h3>Follow anyone</h3><p>Flip the switch next to a member. Choose "Final passage" for the votes that decide a bill, or "Every roll call" to include amendments and procedure.</p></div>
+    <div class="step"><div class="n">03</div><h3>Get the alert</h3><p>Within minutes of a recorded vote: how they voted, the result, and a one-line summary from the Congressional Research Service. Tap through for every member's position.</p></div>
+  </div>
+
+  <div class="shots">
+    <img src="./shot-reps.png" alt="Your representatives screen with three members and follow switches">
+    <img src="./shot-today.png" alt="Today screen listing recent votes by followed members">
+    <img src="./shot-vote.png" alt="A vote page showing each representative's position and the bill summary">
+  </div>
+
+  <section class="featured oc" id="get">
+    <div>
+      <p class="eyebrow">iPhone app</p>
+      <h2>Get Open Chambers</h2>
+      <p>The iPhone app is with Apple for review. When it's approved, the App Store link will appear here. Until then, the web version has everything except notifications, and it works on any phone: open it in Safari or Chrome and add it to your home screen.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <a class="btn primary" href="../floor/">Open the web version</a>
+      </div>
+      <p class="fine">Questions: <a href="mailto:support@johnhubert.llc">support@johnhubert.llc</a> · <a href="../privacy.html">Privacy policy</a></p>
+    </div>
+    <div class="how" style="background:rgba(255,255,255,.08);color:#C8D2E0">
+      <div><b style="color:#F7F6F2">Where the data comes from.</b> Roll calls from the U.S. House Clerk and the U.S. Senate; member records from the unitedstates project; ideology scores from Voteview (UCLA); bill summaries from the Congressional Research Service via Congress.gov. Every vote links to its official page.</div>
+      <div><b style="color:#F7F6F2">What we store.</b> If you turn on alerts: an anonymous notification token and the members you follow. That's all, and it's deleted when you unfollow them.</div>
+    </div>
+  </section>
+
+  <h2 class="sec">Questions</h2>
+  <div class="faq">
+    <details><summary>Is it really free?</summary><p>Yes. There are no ads and nothing to buy. If you'd like to support the work, there will be a way to leave a tip in a future version.</p></details>
+    <details><summary>Does it tell me how to vote, or who's right?</summary><p>No. Open Chambers shows the record and nothing else. The one measure of ideology it shows, DW-NOMINATE, is a published academic method and is displayed exactly as its authors publish it, with a link to how it's calculated.</p></details>
+    <details><summary>Why don't I get an alert for every vote?</summary><p>By default the app sends alerts for final-passage votes only, because most Senate days consist of procedural votes and nominations. Switch to "Every roll call" in Settings if you want all of them.</p></details>
+    <details><summary>Android?</summary><p>Not yet. The web version works on Android and can be added to the home screen; an Android app is planned.</p></details>
+  </div>
+
+  <footer>
+    <span>© 2026 John Hubert LLC. Data is U.S. government public record.</span>
+    <span><a href="../">John Hubert</a> · <a href="../privacy.html">Privacy</a> · <a href="mailto:support@johnhubert.llc">support@johnhubert.llc</a></span>
+  </footer>
+</div>
+</body>
+</html>
