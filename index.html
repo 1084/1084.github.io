@@ -112,6 +112,7 @@
   .oc .points li::before { content: ""; position: absolute; left: 0; top: 9px; width: 10px; height: 10px; border-radius: 50%; background: #D9A441; }
   .oc .fine { font-size: 13.5px; color: #8FA3BD; margin-top: 14px; }
   .oc .fine a { color: #C8D2E0; }
+  .appstore { display:inline-block; margin:0 12px 0 0; } .appstore img { border-radius:0 }
   .phone { justify-self: center; width: 250px; aspect-ratio: 250 / 540; border-radius: 36px; background: #0b1624; padding: 10px; box-shadow: 0 30px 60px rgba(0,0,0,.35), inset 0 0 0 2px #2a3d55; }
   .phone video, .phone img { width: 100%; height: 100%; object-fit: cover; border-radius: 28px; display: block; background: #F7F6F2; }
   @media (max-width: 720px) { .phone { width: 210px; } }
@@ -140,8 +141,8 @@
         <li>No commentary, ratings, or endorsements. Every number is from the official record and links back to it.</li>
         <li>No account, no tracking, no ads. Your ZIP code stays on your phone.</li>
       </ul>
-      <div style="display:flex;flex-wrap:wrap;gap:10px">
-        <a class="btn primary" href="https://apps.apple.com/us/app/open-chambers/id6816544012" rel="noopener">Download on the App Store</a>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <a class="appstore" href="https://apps.apple.com/us/app/open-chambers/id6816544012?itscg=30200&itsct=apps_box_badge&mttnsubad=6816544012" rel="noopener" aria-label="Download on the App Store"><img src="./openchambers/app-store-badge.svg" alt="Download on the App Store" width="144" height="48" style="display:block;width:144px;height:48px"></a>
         <a class="btn" href="./floor/">Try it on the web</a>
       </div>
       <p class="fine">Free, for iPhone. The web version has everything except notifications and works on any phone. <a href="./openchambers/">How it works →</a></p>
