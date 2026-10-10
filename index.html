@@ -200,7 +200,7 @@
       <div class="head"><h3>Vitamin Village</h3><span class="stage prototype">Prototype</span></div>
       <p>Offline-first app about vitamins. A kids' game with ten characters and badges to earn, and a grown-up view with 141 foods, 34 recipes, and a build-your-own recipe helper. No accounts, no tracking.</p>
       <div class="chips"><span class="chip">PWA</span><span class="chip">offline</span><span class="chip">no data collected</span></div>
-      <div class="cta"><a href="./vitamin-village/?mode=game">Kids' game →</a> &nbsp;·&nbsp; <a href="./vitamin-village/?mode=app">Grown-up app →</a></div>
+      <div class="cta"><a href="./vitamin-village/">Open Vitamin Village →</a></div>
     </article>
     <article class="card">
       <div class="head"><h3>Cove</h3><span class="stage testing">Testing</span></div>
@@ -246,16 +246,12 @@
   </footer>
 </div>
 <script>
-  // Count clicks on the Vitamin Village doors, one event each, so the dashboard shows
-  // how many visitors opened the kids' game vs the grown-up app. Nothing runs inside the app itself.
+  // Count clicks into Vitamin Village as one event, so the dashboard shows how many visitors opened it.
+  // (The game/grown-up choice now happens inside the app, which runs no analytics.)
   document.querySelectorAll('a[href^="./vitamin-village/"]').forEach(function (a) {
     a.addEventListener('click', function () {
       if (window.goatcounter && window.goatcounter.count) {
-        var app = a.getAttribute('href').indexOf('mode=app') !== -1;
-        window.goatcounter.count({
-          path: app ? 'event/open-grown-up-app' : 'event/open-kids-game',
-          title: app ? 'Open the grown-up app' : 'Open the kids\' game',
-          event: true });
+        window.goatcounter.count({ path: 'event/open-vitamin-village', title: 'Open Vitamin Village', event: true });
       }
     });
   });
