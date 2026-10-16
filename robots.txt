@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /village/
+
+Sitemap: https://johnhubert.llc/sitemap.xml
