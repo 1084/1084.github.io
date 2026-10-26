@@ -53,6 +53,17 @@
   .hero h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(32px, 5vw, 48px); line-height: 1.05; letter-spacing: -0.025em; margin: 0 0 14px; max-width: 18ch; text-wrap: balance; }
   .hero p { font-size: 19px; color: var(--ink-2); max-width: 58ch; margin: 0; text-wrap: pretty; }
 
+  /* Open Chambers launch video */
+  .launch { margin: 32px 0 8px; }
+  .launch .frame { position: relative; border-radius: 14px; overflow: hidden; background: #0f2237; box-shadow: 0 24px 60px rgba(31,58,95,.22); aspect-ratio: 16 / 9; }
+  .launch video { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .launch .under { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; padding: 18px 4px 0; }
+  .launch .line { font-family: var(--font-display); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); letter-spacing: -0.02em; margin: 0; max-width: 26ch; text-wrap: balance; }
+  .launch .line small { display: block; font-family: var(--font-body); font-weight: 400; font-size: 15.5px; letter-spacing: 0; color: var(--ink-2); margin-top: 4px; }
+  .launch .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .launch .credit { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-3, #7C818A); margin: 10px 4px 0; }
+  .launch .credit a { color: inherit; }
+
   .featured { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; align-items: center; margin: 36px 0 48px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 26px 28px; }
   .featured .eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--st-proto-fg); margin: 0 0 8px; }
   .featured h2 { font-family: var(--font-display); font-weight: 800; font-size: 28px; letter-spacing: -0.02em; margin: 0 0 8px; }
@@ -131,9 +142,23 @@
     <p>John Hubert LLC is a small independent studio of developers. This is where our projects live as they grow from idea to something you can install. Try what's ready, see what's next, and read the guides we write along the way.</p>
   </section>
 
+  <section class="launch" id="launch" aria-label="Open Chambers launch video">
+    <div class="frame">
+      <video src="./openchambers/launch.mp4" poster="./openchambers/launch-poster.jpg" controls muted autoplay loop playsinline preload="metadata" aria-label="Open Chambers in 20 seconds: the House by seat, a ZIP code typed in, your representatives, and a roll-call vote with every position"></video>
+    </div>
+    <div class="under">
+      <p class="line">Before you vote, see how they voted.<small>Open Chambers is live and free: every member of Congress and every roll call, from the official record, with no account and nothing tracked.</small></p>
+      <div class="actions">
+        <a class="appstore" href="https://apps.apple.com/us/app/open-chambers/id6816544012?itscg=30200&itsct=apps_box_badge&mttnsubad=6816544012" rel="noopener" aria-label="Download on the App Store"><img src="./openchambers/app-store-badge.svg" alt="Download on the App Store" width="144" height="48" style="display:block;width:144px;height:48px"></a>
+        <a class="btn primary" href="./floor/">Open it on the web</a>
+      </div>
+    </div>
+    <p class="credit">Music: Sascha Ende, <a href="https://ende.app/en" rel="noopener">ende.app</a> (CC BY 4.0).</p>
+  </section>
+
   <section class="featured oc" id="try-openchambers">
     <div>
-      <p class="eyebrow">New · free iPhone app · now on the App Store</p>
+      <p class="eyebrow">Live · free · iPhone and web</p>
       <h2><span class="mark"><svg viewBox="0 0 1024 1024" width="1em" height="1em" aria-hidden="true"><circle cx="364.3" cy="574.0" r="34.0" fill="currentColor"/><circle cx="415.6" cy="485.1" r="34.0" fill="currentColor"/><circle cx="608.4" cy="485.1" r="34.0" fill="currentColor"/><circle cx="659.7" cy="574.0" r="34.0" fill="currentColor"/><circle cx="287.5" cy="560.4" r="36.0" fill="currentColor"/><circle cx="329.1" cy="463.8" r="36.0" fill="currentColor"/><circle cx="409.7" cy="396.3" r="36.0" fill="currentColor"/><circle cx="614.3" cy="396.3" r="36.0" fill="currentColor"/><circle cx="694.9" cy="463.8" r="36.0" fill="currentColor"/><circle cx="736.5" cy="560.4" r="36.0" fill="currentColor"/><circle cx="210.6" cy="546.9" r="38.0" fill="currentColor"/><circle cx="247.0" cy="447.0" r="38.0" fill="currentColor"/><circle cx="315.3" cy="365.6" r="38.0" fill="currentColor"/><circle cx="407.3" cy="312.5" r="38.0" fill="currentColor"/><circle cx="616.7" cy="312.5" r="38.0" fill="currentColor"/><circle cx="708.7" cy="365.6" r="38.0" fill="currentColor"/><circle cx="777.0" cy="447.0" r="38.0" fill="currentColor"/><circle cx="813.4" cy="546.9" r="38.0" fill="currentColor"/><circle cx="133.8" cy="533.3" r="40.0" fill="currentColor"/><circle cx="166.9" cy="431.7" r="40.0" fill="currentColor"/><circle cx="226.6" cy="343.1" r="40.0" fill="currentColor"/><circle cx="308.5" cy="274.3" r="40.0" fill="currentColor"/><circle cx="406.2" cy="230.9" r="40.0" fill="currentColor"/><circle cx="617.8" cy="230.9" r="40.0" fill="currentColor"/><circle cx="715.5" cy="274.3" r="40.0" fill="currentColor"/><circle cx="797.4" cy="343.1" r="40.0" fill="currentColor"/><circle cx="857.1" cy="431.7" r="40.0" fill="currentColor"/><circle cx="890.2" cy="533.3" r="40.0" fill="currentColor"/><rect x="387.0" y="634.0" width="250.0" height="68.0" rx="20.0" fill="#D9A441"/></svg></span>Open Chambers</h2>
       <p>How the people who represent you in Congress actually vote. Enter your ZIP code and the app finds your representative and both senators; follow them and you get a notification each time one of them casts a vote, with the outcome and a one-line official summary of the bill.</p>
       <ul class="points">
