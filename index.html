@@ -144,7 +144,7 @@
 
   <section class="launch" id="launch" aria-label="Open Chambers launch video">
     <div class="frame">
-      <video src="./openchambers/launch.mp4" poster="./openchambers/launch-poster.jpg" controls muted autoplay loop playsinline preload="metadata" aria-label="Open Chambers in 20 seconds: the House by seat, a ZIP code typed in, your representatives, and a roll-call vote with every position"></video>
+      <video id="launch-video" src="./openchambers/launch.mp4" poster="./openchambers/launch-poster.jpg" controls muted playsinline preload="metadata" aria-label="Open Chambers in 20 seconds: the House by seat, a ZIP code typed in, your representatives, and a roll-call vote with every position"></video>
     </div>
     <div class="under">
       <p class="line">Before you vote, see how they voted.<small>Open Chambers is live and free: every member of Congress and every roll call, from the official record, with no account and nothing tracked.</small></p>
@@ -155,6 +155,24 @@
     </div>
     <p class="credit">Music: Sascha Ende, <a href="https://ende.app/en" rel="noopener">ende.app</a> (CC BY 4.0).</p>
   </section>
+  <script>
+    // The launch video waits 10 s after the page opens, then plays once (muted)
+    // if it's on screen and the visitor hasn't already started it themselves.
+    (function () {
+      var v = document.getElementById('launch-video');
+      if (!v) return;
+      var started = false;
+      v.addEventListener('play', function () { started = true; });
+      setTimeout(function () {
+        if (started) return;
+        var r = v.getBoundingClientRect();
+        var onScreen = r.top < window.innerHeight * 0.8 && r.bottom > window.innerHeight * 0.2;
+        if (!onScreen) return;
+        var p = v.play();
+        if (p && p.catch) p.catch(function () {});
+      }, 10000);
+    })();
+  </script>
 
   <section class="featured oc" id="try-openchambers">
     <div>
