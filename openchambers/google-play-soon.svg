@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="144" height="48" viewBox="0 0 144 48" role="img" aria-labelledby="t">
+  <title id="t">Coming soon to Google Play</title>
+  <rect x="0.5" y="0.5" width="143" height="47" rx="6.5" fill="#000" stroke="#A6A6A6"/>
+  <!-- play triangle, outlined in white: a plain glyph, not the Google Play logo -->
+  <path d="M14 12.5v23l17.5-11.5z" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+  <text x="40" y="19" fill="#fff" font-family="Helvetica Neue, Arial, sans-serif" font-size="8.2" letter-spacing=".4">COMING SOON TO</text>
+  <text x="40" y="35" fill="#fff" font-family="Helvetica Neue, Arial, sans-serif" font-size="17" font-weight="500" letter-spacing="-.2">Google Play</text>
+</svg>
