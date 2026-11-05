@@ -58,7 +58,7 @@
   .launch .frame { position: relative; border-radius: 14px; overflow: hidden; background: #0f2237; box-shadow: 0 24px 60px rgba(31,58,95,.22); aspect-ratio: 16 / 9; }
   .launch video { display: block; width: 100%; height: 100%; object-fit: cover; }
   .launch .under { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; padding: 18px 4px 0; }
-  .launch .line { font-family: var(--font-display); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); letter-spacing: -0.02em; margin: 0; max-width: 26ch; text-wrap: balance; }
+  .launch .line { font-family: var(--font-display); font-weight: 800; font-size: clamp(20px, 2.6vw, 26px); letter-spacing: -0.02em; margin: 0; max-width: 40ch; text-wrap: balance; }
   .launch .line small { display: block; font-family: var(--font-body); font-weight: 400; font-size: 15.5px; letter-spacing: 0; color: var(--ink-2); margin-top: 4px; }
   .launch .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   .playstore { display: inline-block; opacity: .85; }
@@ -148,12 +148,7 @@
       <video id="launch-video" src="./openchambers/launch.mp4" poster="./openchambers/launch-poster.jpg" controls muted playsinline preload="metadata" aria-label="Open Chambers in 20 seconds: the House by seat, a ZIP code typed in, your representatives, and a roll-call vote with every position"></video>
     </div>
     <div class="under">
-      <p class="line">Before you vote, see how they voted.<small>Open Chambers is live and free: every member of Congress and every roll call, from the official record, with no account and nothing tracked.</small></p>
-      <div class="actions">
-        <a class="appstore" href="https://apps.apple.com/us/app/open-chambers/id6816544012?itscg=30200&itsct=apps_box_badge&mttnsubad=6816544012" rel="noopener" aria-label="Download on the App Store"><img src="./openchambers/app-store-badge.svg" alt="Download on the App Store" width="144" height="48" style="display:block;width:144px;height:48px"></a>
-        <span class="playstore" title="The Android app is in testing" aria-label="Coming soon to Google Play"><img src="./openchambers/google-play-soon.svg" alt="Coming soon to Google Play" width="144" height="48" style="display:block;width:144px;height:48px"></span>
-        <a class="btn primary" href="./floor/">Open it on the web</a>
-      </div>
+      <p class="line">You voted. Now see how they vote.<small>Open Chambers is live and free: every member of Congress and every roll call, from the official record, with no account and nothing tracked.</small></p>
     </div>
     <p class="credit">Music: Sascha Ende, <a href="https://ende.app/en" rel="noopener">ende.app</a> (CC BY 4.0).</p>
   </section>
