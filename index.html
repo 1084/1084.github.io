@@ -133,7 +133,7 @@
   .vet { display: flex; align-items: center; gap: 20px; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 18px; }
   .vet img { flex: none; width: 112px; height: 112px; display: block; }
   .vet p { margin: 0; }
-  .vet-foot { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-2); }
+  .vet-foot { display: flex; align-items: center; gap: 8px; flex-basis: 100%; color: var(--ink-2); }
   .vet-foot img { width: 28px; height: 28px; display: block; }
   @media (max-width: 720px) { .vet { flex-direction: column; text-align: center; } }
 </style>
@@ -306,8 +306,8 @@
 
   <footer>
     <span>© 2026 John Hubert LLC. All rights reserved.</span>
+    <span><a href="mailto:support@johnhubert.llc">support@johnhubert.llc</a> · <a href="./privacy.html">Privacy</a></span>
     <span class="vet-foot"><img src="./veteran-owned.png" alt="" width="28" height="28" loading="lazy">Veteran-owned and operated</span>
-    <span><a href="mailto:support@johnhubert.llc">support@johnhubert.llc</a> · <a href="./privacy.html">Privacy</a> · <a href="#support">Support the work</a></span>
   </footer>
 </div>
 <script>
