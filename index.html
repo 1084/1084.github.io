@@ -128,6 +128,14 @@
   .phone { justify-self: center; width: 250px; aspect-ratio: 250 / 540; border-radius: 36px; background: #0b1624; padding: 10px; box-shadow: 0 30px 60px rgba(0,0,0,.35), inset 0 0 0 2px #2a3d55; }
   .phone video, .phone img { width: 100%; height: 100%; object-fit: cover; border-radius: 28px; display: block; background: #F7F6F2; }
   @media (max-width: 720px) { .phone { width: 210px; } }
+
+  /* Veteran-owned badge */
+  .vet { display: flex; align-items: center; gap: 20px; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 18px; }
+  .vet img { flex: none; width: 112px; height: 112px; display: block; }
+  .vet p { margin: 0; }
+  .vet-foot { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-2); }
+  .vet-foot img { width: 28px; height: 28px; display: block; }
+  @media (max-width: 720px) { .vet { flex-direction: column; text-align: center; } }
 </style>
 <script data-goatcounter="https://johnhubert.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
@@ -281,6 +289,10 @@
   <div class="card" style="margin-bottom:48px">
     <p><b>John Hubert LLC</b> is an independent software studio. We build small, focused applications, with a particular interest in tools for learning and in software that respects the people who use it: our apps work offline where they can, collect nothing they don't need, and never sell data.</p>
     <p>Current work includes <b>Open Chambers</b>, the voting record of Congress with alerts when your representatives vote; <b>Vitamin Village</b>, a nutrition game for children with a companion app for parents; <b>Cove</b>, private video rooms for tutors and small groups, with live captions and translation; and <b>visual-math</b>, a visualization-first approach to university mathematics. Everything here moves through the same stages, from concept to prototype to testing to live, and we say plainly which stage each project is at.</p>
+    <div class="vet">
+      <img src="./veteran-owned.png" alt="Veteran Owned Business badge" width="112" height="112" loading="lazy">
+      <p><b>John Hubert LLC is proudly veteran-owned and operated.</b></p>
+    </div>
     <p>Questions, feedback, or a bug to report: <a href="mailto:support@johnhubert.llc">support@johnhubert.llc</a>. Our <a href="./privacy.html">privacy policy</a> covers this website and every app we publish.</p>
   </div>
 
@@ -294,6 +306,7 @@
 
   <footer>
     <span>© 2026 John Hubert LLC. All rights reserved.</span>
+    <span class="vet-foot"><img src="./veteran-owned.png" alt="" width="28" height="28" loading="lazy">Veteran-owned and operated</span>
     <span><a href="mailto:support@johnhubert.llc">support@johnhubert.llc</a> · <a href="./privacy.html">Privacy</a> · <a href="#support">Support the work</a></span>
   </footer>
 </div>
